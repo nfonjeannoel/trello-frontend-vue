@@ -6,6 +6,7 @@ import LoginView from '../views/LoginView.vue'
 import TermsAndConditionsView from '../views/TermsAndConditionsView.vue'
 import HelperView from '../views/HelperView.vue'
 import BoardsView from '../views/BoardsView.vue'
+import { useAuthStore } from '@/stores/auth.store';
 
 
 const router = createRouter({
@@ -14,7 +15,10 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: HomeView,
+      meta: {
+        public: true
+      }
     },
     {
       path: '/about',
@@ -22,7 +26,10 @@ const router = createRouter({
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: AboutView
+      component: AboutView,
+      meta: {
+        public: true
+      }
     },
     {
       path: '/signup',
@@ -30,7 +37,8 @@ const router = createRouter({
       component: SignUpView,
       meta: {
         hideNavbar: true,
-       }
+        public: true
+      }
     },
     {
       path: '/login',
@@ -38,12 +46,16 @@ const router = createRouter({
       component: LoginView,
       meta: {
         hideNavbar: true,
-       }
+        public: true
+      }
     },
     {
       path: '/terms-and-conditions',
       name: 'terms-and-conditions',
-      component: TermsAndConditionsView
+      component: TermsAndConditionsView,
+      meta: {
+        public: true
+      }
     },
     {
       path: '/helper',
@@ -51,19 +63,36 @@ const router = createRouter({
       component: HelperView,
       meta: {
         hideNavbar: true,
-       }
+        public: true
+      }
     },
     {
       path: '/boards',
       name: 'boards',
-      component: BoardsView
+      component: BoardsView,
+      meta: {
+        public: false
+      }
     }
   ]
 })
-let isAuthenticated = false
-router.beforeEach((to, from, next) => {
-  if (to.name !== 'login' && !isAuthenticated) next({ name: 'login' })
-  else next()
-})
+
+router.beforeEach(async (to) => {
+  // redirect to login page if not logged in and trying to access a restricted page
+  const isPublic = to.meta.public || false
+  // const authRequired = !publicPages.includes(to.path);
+  const auth = useAuthStore();
+
+
+  if (isPublic) {
+
+  } else {
+    if (!auth.user) {
+      auth.returnUrl = to.fullPath;
+      return '/login';
+    }
+  }
+
+});
 
 export default router

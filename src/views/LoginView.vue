@@ -3,55 +3,60 @@ import { RouterLink } from "vue-router";
 import { ref } from "vue";
 import axios from "axios";
 import router from "@/router";
-import { useUserStore } from '@/stores/user.js'
-
-const userStore = useUserStore()
+import { useAuthStore } from '@/stores/auth.store';
 
 const username = ref("");
 const password = ref("");
 let loading = ref(false)
 
-const loginUser = async () => {
-  // Perform data validation and cleaning
+// const loginUser = async () => {
+//   // Perform data validation and cleaning
 
-  username.value = username.value.trim();
+//   username.value = username.value.trim();
 
-  if (!username.value || !password.value) {
-    console.log("Please fill in all fields.");
-    return;
-  }
+//   if (!username.value || !password.value) {
+//     console.log("Please fill in all fields.");
+//     return;
+//   }
 
-  // Send request to backend to create user
-  loading.value = true
-  try {
-    const response = await axios.post("http://127.0.0.1:8000/users/token", {
-      username: username.value,
-      password: password.value,
-    }, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+//   // Send request to backend to create user
+//   loading.value = true
+//   try {
+//     const response = await axios.post("http://127.0.0.1:8000/users/token", {
+//       username: username.value,
+//       password: password.value,
+//     }, {
+//       headers: {
+//         "Content-Type": "application/x-www-form-urlencoded",
+//       },
+//     });
+
+
+//     userStore.setUser(response.data)
+
+//     // navigate to login page
+//     router.push({
+//       name: 'boards',
+//     })
+//     loading.value = false
+
+
+//     console.log("logged in successfully!");
+//     // console.log(response.data);
+//   } catch (error) {
+//     console.log("Error logging in");
+//     console.log(error);
+//     loading.value = false
+//   }
+// };
+
+function onSubmit() {
+  const authStore = useAuthStore();
+  return authStore.login(username.value, password.value)
+    .catch(error => {
+      console.log(error)
     });
-
-
-    userStore.setUser(response.data)
-
-    // navigate to login page
-    router.push({
-      name: 'boards',
-    })
-    loading.value = false
-
-
-    console.log("logged in successfully!");
-    // console.log(response.data);
-  } catch (error) {
-    console.log("Error logging in");
-    console.log(error);
-    loading.value = false
-  }
-};
-
+}
 
 </script>
 
@@ -69,7 +74,7 @@ const loginUser = async () => {
             Sign in to your account
           </h1>
 
-          <form class="space-y-4 md:space-y-6" method="POST">
+          <form class="space-y-4 md:space-y-6">
             <!-- <FormKit type="form" :value="formData" @submit="loginUser"> -->
 
             <div>
@@ -104,7 +109,7 @@ const loginUser = async () => {
                     class="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500">Forgot
                     password?</a>
             </div> -->
-            <button type="submit.prevent" @click="loginUser" :disabled="loading"
+            <button type="button" :disabled="loading" @click="onSubmit"
               class="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
               {{ loading ? "Please wait..." : "Sign in" }}
             </button>
