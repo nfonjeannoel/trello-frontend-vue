@@ -4,6 +4,8 @@ import AboutView from '../views/AboutView.vue'
 import SignUpView from '../views/SignUpView.vue'
 import LoginView from '../views/LoginView.vue'
 import TermsAndConditionsView from '../views/TermsAndConditionsView.vue'
+import HelperView from '../views/HelperView.vue'
+import BoardsView from '../views/BoardsView.vue'
 
 
 const router = createRouter({
@@ -42,8 +44,26 @@ const router = createRouter({
       path: '/terms-and-conditions',
       name: 'terms-and-conditions',
       component: TermsAndConditionsView
+    },
+    {
+      path: '/helper',
+      name: 'helper',
+      component: HelperView,
+      meta: {
+        hideNavbar: true,
+       }
+    },
+    {
+      path: '/boards',
+      name: 'boards',
+      component: BoardsView
     }
   ]
+})
+let isAuthenticated = false
+router.beforeEach((to, from, next) => {
+  if (to.name !== 'login' && !isAuthenticated) next({ name: 'login' })
+  else next()
 })
 
 export default router

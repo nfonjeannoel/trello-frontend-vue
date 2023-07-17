@@ -1,9 +1,8 @@
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
-  </div>
+  <h1 class="text-4xl">About page</h1>
 </template>
 
-<style>
+<script setup>
+</script>
 
-</style>
+<style></style>
