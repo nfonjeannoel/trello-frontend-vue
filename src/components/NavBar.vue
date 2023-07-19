@@ -1,4 +1,10 @@
 <script setup>
+import { RouterLink } from "vue-router";
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth.store';
+import { ref } from "vue";
+const authStore = useAuthStore();
+const { user } = storeToRefs(authStore)
 </script>
 <template>
     <nav class="bg-white border-gray-200 white:bg-white-900 px-2">
@@ -18,8 +24,18 @@
                 </svg>
             </button>
             <div class="hidden w-full md:block md:w-auto" id="navbar-default">
-                <ul class="font-medium flex flex-col items-center justify-center p-2 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 ">
-                    <li>
+                <ul
+                    class="font-medium flex flex-col items-center justify-center p-2 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 ">
+                    <li v-if="user ? true : false">
+                        <!-- a small round photo for user image -->
+                        <div class="flex items-center">
+                            <img class="w-10 h-10 rounded-full mr-8" src="https://picsum.photos/12/12" alt="user photo" />
+                            <button @click="authStore.logout(redirect = true)"
+                                class="block py-2 px-10 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
+                                aria-current="page">Logout</Button>
+                        </div>
+                    </li>
+                    <li v-else>
                         <RouterLink to="/login"
                             class="block py-2  px-10 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
                             aria-current="page">Login</RouterLink>
