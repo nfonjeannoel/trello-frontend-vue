@@ -6,6 +6,7 @@ import LoginView from '../views/LoginView.vue'
 import TermsAndConditionsView from '../views/TermsAndConditionsView.vue'
 import HelperView from '../views/HelperView.vue'
 import BoardsView from '../views/BoardsView.vue'
+import BoardDetailsView from '../views/BoardDetailsView.vue'
 import { useAuthStore } from '@/stores/auth.store';
 
 
@@ -73,6 +74,12 @@ const router = createRouter({
       meta: {
         public: false
       }
+    },
+
+    {
+      path: '/board/:id', // The route includes ":id" as a parameter to capture the board ID
+      name: 'BoardDetails',
+      component: BoardDetailsView
     }
   ]
 })
