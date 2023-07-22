@@ -11,13 +11,19 @@ export const useBoardStore = defineStore({
     state: () => ({
         // initialize state from local storage to enable user to stay logged in
         myBoards: [],
-        publicBoards: []
+        publicBoards: [],
+        fullBoard: {},
     }),
     actions: {
         async getMyBoards() {
             const boards = await fetchWrapper.get(`${baseUrl}/me`);
             this.myBoards = boards;
         },
+
+        async getFullBoard(id) {
+            const board = await fetchWrapper.get(`${baseUrl}/get_full_board?board_id=${id}`);
+            this.fullBoard = board;
+        }
         // async login(username, password) {
         //     const user = await fetchWrapper.post(`${baseUrl}/token`, { username, password });
 

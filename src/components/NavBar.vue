@@ -2,9 +2,15 @@
 import { RouterLink } from "vue-router";
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth.store';
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { useRoute } from "vue-router";
+const route = useRoute();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore)
+const shouldRedirect = computed(() => {
+    return route.name == 'home' ? false : true
+})
+
 </script>
 <template>
     <nav class="bg-white border-gray-200 white:bg-white-900 px-2">
@@ -30,7 +36,7 @@ const { user } = storeToRefs(authStore)
                         <!-- a small round photo for user image -->
                         <div class="flex items-center">
                             <img class="w-10 h-10 rounded-full mr-8" src="https://picsum.photos/12/12" alt="user photo" />
-                            <button @click="authStore.logout(redirect = true)"
+                            <button @click="authStore.logout(redirect = shouldRedirect)"
                                 class="block py-2 px-10 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
                                 aria-current="page">Logout</Button>
                         </div>

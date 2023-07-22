@@ -1,0 +1,47 @@
+// utils/helpers.js
+export const applyListDrag = (board, dragResult) => {
+    const { removedIndex, addedIndex, payload } = dragResult;
+    if (removedIndex === null && addedIndex === null) return board;
+    
+    const lists = [...board.lists];
+    const listToAdd = payload;
+    
+    if (removedIndex !== null) {
+      listToAdd.position = removedIndex;
+      lists.splice(removedIndex, 1);
+    }
+    
+    if (addedIndex !== null) {
+      listToAdd.position = addedIndex;
+      lists.splice(addedIndex, 0, listToAdd);
+    }
+    
+    return { ...board, lists };
+  };
+  
+  export const applyCardDrag = (board, listId, dragResult) => {
+    const { removedIndex, addedIndex, payload } = dragResult;
+    if (removedIndex === null && addedIndex === null) return board;
+    
+    const lists = [...board.lists];
+    const listIndex = lists.findIndex(list => list.id === listId);
+    if (listIndex === -1) return board;
+    
+    const cards = [...lists[listIndex].cards];
+    const cardToAdd = payload;
+    
+    if (removedIndex !== null) {
+      cardToAdd.list_id = null; // Unassign the card from the previous list
+      cards.splice(removedIndex, 1);
+    }
+    
+    if (addedIndex !== null) {
+      cardToAdd.list_id = listId; // Assign the card to the new list
+      cards.splice(addedIndex, 0, cardToAdd);
+    }
+    
+    lists[listIndex].cards = cards;
+    
+    return { ...board, lists };
+  };
+  
