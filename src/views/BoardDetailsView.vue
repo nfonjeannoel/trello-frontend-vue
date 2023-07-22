@@ -1,32 +1,27 @@
 <template>
   <div class="bg-gray-100 min-h-screen py-8">
     <div class="container mx-auto px-4">
-      <h1 class="text-3xl font-semibold mb-4">{{ board.name }}</h1>
-      <div class="grid grid-cols-3 gap-4">
-        <div v-for="list in board.lists" :key="list.id" class="bg-white rounded-lg p-4 shadow">
-          <h2 class="text-xl font-semibold mb-2">{{ list.name }}</h2>
-          <div v-if="list.cards.length > 0">
-            <div v-for="card in list.cards" :key="card.id" class="bg-gray-200 rounded-lg p-2 mt-2">
-              <h3 class="text-lg font-medium mb-1">{{ card.title }}</h3>
-              <p class="text-gray-600 mb-2">{{ card.description }}</p>
-              <p v-if="card.due_date" class="text-sm text-gray-500">
-                Due Date: {{ card.due_date }}
-              </p>
-              <div v-if="card.card_members.length > 0">
-                <div v-for="member in card.card_members" :key="member.id" class="flex items-center mt-1">
-                  <img
-                    v-if="member.user.email"
-                    :src="`https://www.gravatar.com/avatar/${hashCode(member.user.email)}?s=24&d=identicon`"
-                    class="w-4 h-4 rounded-full mr-2"
-                    alt="Avatar"
-                  />
-                  <span class="text-sm">{{ member.user.username }}</span>
-                </div>
-              </div>
-            </div>
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-3xl font-semibold">{{ board.name }}</h1>
+          <div v-if="board.is_public" class="text-sm text-green-600">
+            <i class="fas fa-globe-americas mr-1"></i> Public Board
           </div>
-          <p v-else class="text-gray-500 mt-2">No cards in this list.</p>
+          <div v-else class="text-sm text-red-600">
+            <i class="fas fa-lock mr-1"></i> Private Board
+          </div>
         </div>
+        <div class="flex items-center">
+          <div v-for="(member, index) in displayedMembers" :key="index" class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold">
+            {{ member[0].toUpperCase() }}
+          </div>
+          <div v-if="hasMoreMembers" class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold">
+            +
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-4 overflow-x-auto">
+        <List v-for="list in board.lists" :key="list.id" :list="list" class="list" />
       </div>
     </div>
   </div>
@@ -36,6 +31,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBoardStore } from '@/stores/boards.store';
+import List from '@/components/List.vue';
 
 const boardStore = useBoardStore();
 const route = useRoute();
@@ -43,20 +39,54 @@ const route = useRoute();
 onMounted(async () => {
   const boardId = route.params.id;
   await boardStore.getFullBoard(boardId);
-  console.log(boardStore.fullBoard);
 });
 
 // get a reference to the board
 const board = computed(() => boardStore.fullBoard);
 
-// Function to generate hash code for email
-const hashCode = (s) =>
-  s.split('').reduce((a, b) => {
-    a = (a << 5) - a + b.charCodeAt(0);
-    return a & a;
-  }, 0);
+const MAX_DISPLAYED_MEMBERS = 5;
+  const uniqueMembers = new Set();
+// Display the first letters of the board members' usernames
+const displayedMembers = computed(() => {
+  
+
+  // Loop through all the cards and collect unique members
+  boardStore.fullBoard.lists?.forEach((list) => {
+    list.cards?.forEach((card) => {
+      card.card_members?.forEach((member) => {
+        uniqueMembers.add(member.user.username);
+      });
+    });
+  });
+
+  // Convert the unique members set to an array
+  const membersArray = Array.from(uniqueMembers);
+
+  return membersArray.slice(0, MAX_DISPLAYED_MEMBERS);
+});
+
+// Check if there are more members beyond the first 5 displayed members
+const hasMoreMembers = computed(() => {
+  // If the number of unique members is greater than the max displayed members
+  if (uniqueMembers.size > MAX_DISPLAYED_MEMBERS) {
+    return true;
+  }
+  return false
+});
 </script>
 
 <style>
-/* Add any custom styles here if needed */
+/* ... Your other styles ... */
+
+/* Flex container for the first letters of members */
+.flex {
+  display: flex;
+  align-items: center;
+}
+
+/* Font Awesome Icons */
+i.fa-globe-americas,
+i.fa-lock {
+  font-size: 0.75rem;
+}
 </style>

@@ -35,7 +35,10 @@ const shouldRedirect = computed(() => {
                     <li v-if="user ? true : false">
                         <!-- a small round photo for user image -->
                         <div class="flex items-center">
-                            <img class="w-10 h-10 rounded-full mr-8" src="https://picsum.photos/12/12" alt="user photo" />
+                            <RouterLink to="/boards"
+                            class="block py-2  px-10 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
+                            aria-current="page">My Boards</RouterLink>
+                            <img class="w-10 h-10 rounded-full mx-8" src="https://picsum.photos/12/12" alt="user photo" />
                             <button @click="authStore.logout(redirect = shouldRedirect)"
                                 class="block py-2 px-10 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
                                 aria-current="page">Logout</Button>
