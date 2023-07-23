@@ -5,6 +5,7 @@ import router from "@/router";
 
 
 const baseUrl = `http://127.0.0.1:8000/boards`;
+const listBaseUrl = `http://127.0.0.1:8000/lists`
 
 export const useBoardStore = defineStore({
     id: 'board',
@@ -23,21 +24,20 @@ export const useBoardStore = defineStore({
         async getFullBoard(id) {
             const board = await fetchWrapper.get(`${baseUrl}/get_full_board?board_id=${id}`);
             this.fullBoard = board;
+        },
+        // updateListTitle(list.id, boardStore.fullBoard.id, newTitle);
+        async updateListTitle(listId, boardId, newData) {
+            let newList = await fetchWrapper.put(`${listBaseUrl}/${listId}/${boardId}`, newData);
+
+
+            this.fullBoard.lists.forEach((list, index) => {
+                if (list.id === listId) {
+                    this.fullBoard.lists[index] = newList;
+                }
+            });
+
         }
-        // async login(username, password) {
-        //     const user = await fetchWrapper.post(`${baseUrl}/token`, { username, password });
 
-        //     // update pinia state
-        //     this.user = user;
-
-        //     // store user details and jwt in local storage to keep user logged in between page refreshes
-        //     localStorage.setItem('user', JSON.stringify(user));
-
-
-
-        //     // redirect to previous url or default to home page
-        //     router.push(this.returnUrl || '/boards');
-        // },
 
     }
 });
