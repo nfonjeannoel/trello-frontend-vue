@@ -37,17 +37,14 @@ export const useBoardStore = defineStore({
                 }
             });
 
-        }
-
-
-    },
-    getters: {},
-
-    setters: {
-        setActiveCard(card) {
+        },
+        
+        async setActiveCard(card) {
             this.card = card;
             console.log("card set");
             console.log(this.card);
         }
+
+
     },
 });

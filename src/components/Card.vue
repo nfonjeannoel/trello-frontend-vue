@@ -1,7 +1,7 @@
 <!-- Card.vue -->
 
 <template>
-  <CardModal @emitClose="showMore = false" v-if="showMore" />
+  <!-- <CardModal @emitClose="showMore = false" v-if="showMore" /> -->
   <div class="card bg-white rounded-lg p-4 mt-2 shadow-md transition-shadow hover:shadow-xl" @click="handleShowMore">
     <h3 class="text-lg font-medium mb-2">{{ truncate(card.title, 50, '...') }}</h3>
     <div class="text-gray-600 mb-2">
@@ -39,13 +39,15 @@ import CardModal from './CardModal.vue';
 import { useBoardStore } from '@/stores/boards.store';
 import { ref } from 'vue';
 import { toRefs } from 'vue';
+import router from '@/router';
+
 
 
 const props = defineProps(['card']);
 const { card } = toRefs(props);
 
 const boardStore = useBoardStore();
-let showMore = ref(false);
+// let showMore = ref(false);
 
 function truncate(text, length, suffix) {
   if (text.length > length) {
@@ -56,8 +58,12 @@ function truncate(text, length, suffix) {
 }
 
 const handleShowMore = () => {
-  showMore.value = true;
+  // showMore.value = true;
   boardStore.setActiveCard(card.value);
+  router.push({ name: 'CardDetails', params: {
+    id: boardStore.fullBoard.id,
+    cardId: card.value.id,  
+   }});
 };
 
 // Function to generate hash code for email
