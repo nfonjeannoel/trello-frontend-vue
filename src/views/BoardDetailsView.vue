@@ -36,6 +36,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBoardStore } from '@/stores/boards.store';
 import List from '@/components/List.vue';
+import { storeToRefs } from 'pinia'
 
 const boardStore = useBoardStore();
 const route = useRoute();
@@ -46,8 +47,8 @@ onMounted(async () => {
 });
 
 // get a reference to the board
-const board = computed(() => boardStore.fullBoard);
-
+// const board = computed(() => boardStore.fullBoard);
+const { fullBoard: board } = storeToRefs(boardStore);
 const MAX_DISPLAYED_MEMBERS = 5;
 let uniqueMembers = ref(new Set());
 // Display the first letters of the board members' usernames
@@ -55,7 +56,7 @@ const displayedMembers = computed(() => {
 
 
   // Loop through all the cards and collect unique members
-  boardStore.fullBoard.lists?.forEach((list) => {
+  board.lists?.forEach((list) => {
     list.cards?.forEach((card) => {
       card.card_members?.forEach((member) => {
         uniqueMembers.value.add(member.user.username);

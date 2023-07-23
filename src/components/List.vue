@@ -2,11 +2,14 @@
 <script setup>
 import Card from './Card.vue';
 import { useBoardStore } from '@/stores/boards.store';
-import { defineProps } from 'vue';
+import { toRefs } from 'vue';
 
 const boardStore = useBoardStore();
 // define props
-const { list } = defineProps(['list']);
+const props = defineProps(['list']);
+
+// destructure props
+const { list } = toRefs(props);
 
 // watch for changes to the list
 
@@ -16,24 +19,21 @@ const onChangeTitle = (e) => {
   // validate title 
   if (newTitle.length < 1) {
     console.log('Title must be at least 1 character.');
-    e.target.innerText = list.name;
+    e.target.innerText = list.value.name;
     return;
   }
   // if new title is the same as the old title, do nothing
-  if (newTitle === list.name) {
+  if (newTitle === list.value.name) {
     console.log('Title is the same.');
     // reset title
-    e.target.innerText = list.name;
+    e.target.innerText = list.value.name;
     return;
   }
 
-  // console.log('New title: ', newTitle);
-  // console.log('Old title: ', list.name);
-  // update list title
-  // FIXME: LIST.NAME IS NOT REACTIVE AND IS NOT UPDATING TO LATTEST VALUE
-  boardStore.updateListTitle(list.id, boardStore.fullBoard.id, {
+
+  boardStore.updateListTitle(list.value.id, boardStore.fullBoard.id, {
     name: newTitle,
-    position: list.position // update position here?
+    position: list.value.position // update position here?
   });
 
 

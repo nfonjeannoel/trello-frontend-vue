@@ -13,4 +13,5 @@ app.use(createPinia())
 app.use(plugin, defaultConfig(config))
 app.use(router)
 
+
 app.mount('#app')

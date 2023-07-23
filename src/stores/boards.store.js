@@ -14,6 +14,7 @@ export const useBoardStore = defineStore({
         myBoards: [],
         publicBoards: [],
         fullBoard: {},
+        card: {},
     }),
     actions: {
         async getMyBoards() {
@@ -39,5 +40,14 @@ export const useBoardStore = defineStore({
         }
 
 
-    }
+    },
+    getters: {},
+
+    setters: {
+        setActiveCard(card) {
+            this.card = card;
+            console.log("card set");
+            console.log(this.card);
+        }
+    },
 });
