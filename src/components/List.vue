@@ -46,18 +46,34 @@ const handleEnterButton = (e) => {
   }
 };
 
+const onDrop = (e) => {
+  e.preventDefault();
+  const jsonData = e.dataTransfer.getData('text/plain');
+  const { cardId, oldListId } = JSON.parse(jsonData);
+  const newListId = list.value.id;
+
+  boardStore.updateCardListId(cardId, newListId, oldListId);
+};
+
+const onDragOver = (e) => {
+  e.preventDefault();
+};
+
 
 </script>
 
 <template>
   <div class="list-container">
     <div class="list bg-white rounded-lg p-4 shadow h-fit">
-      <h2 class="text-xl font-semibold mb-2" contenteditable="true" @blur="onChangeTitle" @keypress="handleEnterButton">{{
-        list.name }}</h2>
-      <div v-if="list.cards.length > 0">
-        <Card v-for="card in list.cards" :key="card.id" :card="card" />
+      <h2 class="text-xl font-semibold mb-2" contenteditable="true" @dragover="onDragOver" @blur="onChangeTitle"
+        @keypress="handleEnterButton">{{
+          list.name }}</h2>
+      <div class="cards-container" @drop="onDrop" @dragover="onDragOver">
+        <div v-if="list.cards.length > 0">
+          <Card v-for="card in list.cards" :key="card.id" :card="card" />
+        </div>
+        <p v-else class="text-gray-500 mt-2">No cards in this list.</p>
       </div>
-      <p v-else class="text-gray-500 mt-2">No cards in this list.</p>
     </div>
   </div>
 </template>

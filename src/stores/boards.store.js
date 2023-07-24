@@ -6,6 +6,7 @@ import router from "@/router";
 
 const baseUrl = `http://127.0.0.1:8000/boards`;
 const listBaseUrl = `http://127.0.0.1:8000/lists`
+const cardBaseUrl = `http://127.0.0.1:8000/cards`
 
 export const useBoardStore = defineStore({
     id: 'board',
@@ -38,11 +39,36 @@ export const useBoardStore = defineStore({
             });
 
         },
-        
+
         async setActiveCard(card) {
             this.card = card;
-            console.log("card set");
-            console.log(this.card);
+        },
+
+        // updateCardListId(cardToMove.id, list.value.id)
+        async updateCardListId(cardId, newListId, oldListId) {
+            let newCard = await fetchWrapper.put(`${cardBaseUrl}/${this.fullBoard.id}/${cardId}/${newListId}`);
+
+            let oldCard;
+
+            this.fullBoard.lists.forEach((list, listIndex) => {
+                if (list.id === oldListId) {
+                    oldCard = this.fullBoard.lists[listIndex].cards.find(card => card.id === cardId);
+                    this.fullBoard.lists[listIndex]?.cards?.forEach((card, cardIndex) => {
+                        if (card.id === cardId) {
+                            this.fullBoard.lists[listIndex].cards.splice(cardIndex, 1);
+                        }
+                    });
+                }
+            });
+
+
+            this.fullBoard.lists.forEach((list, index) => {
+                if (list.id === newListId) {
+                    // update the list id of old card and push it to the new list
+                    oldCard.list_id = newCard.list_id;
+                    this.fullBoard.lists[index].cards.push(oldCard);
+                }
+            });
         }
 
 
