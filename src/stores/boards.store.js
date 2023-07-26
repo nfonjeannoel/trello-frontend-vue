@@ -7,6 +7,7 @@ import router from "@/router";
 const baseUrl = `http://127.0.0.1:8000/boards`;
 const listBaseUrl = `http://127.0.0.1:8000/lists`
 const cardBaseUrl = `http://127.0.0.1:8000/cards`
+const checkListBaseUrl = `http://127.0.0.1:8000/checklists`
 
 export const useBoardStore = defineStore({
     id: 'board',
@@ -16,6 +17,7 @@ export const useBoardStore = defineStore({
         publicBoards: [],
         fullBoard: {},
         card: {},
+        // fullCard: {},
     }),
     actions: {
         async getMyBoards() {
@@ -38,6 +40,12 @@ export const useBoardStore = defineStore({
                 }
             });
 
+        },
+
+        // boardStore.getFullCard(cardId);
+        async getFullCard(cardId, boardId) {
+            const card = await fetchWrapper.get(`${cardBaseUrl}/${boardId}/${cardId}/get_full_card`);
+            this.card = card;
         },
 
         async setActiveCard(card) {
@@ -69,7 +77,22 @@ export const useBoardStore = defineStore({
                     this.fullBoard.lists[index].cards.push(oldCard);
                 }
             });
+        },
+        async updateCheckList(checkList) {
+            let newCheckList = await fetchWrapper.put(`${checkListBaseUrl}/${this.fullBoard.id}/${this.card.id}/${checkList.id}/update_checklist`, checkList);
+            this.fullBoard.lists.forEach((list, listIndex) => {
+                list.cards.forEach((card, cardIndex) => {
+                    if (card.id === this.card.id) {
+                        this.fullBoard.lists[listIndex].cards[cardIndex].checklists.forEach((checklist, checklistIndex) => {
+                            if (checklist.id === checkList.id) {
+                                this.fullBoard.lists[listIndex].cards[cardIndex].checklists[checklistIndex] = newCheckList;
+                            }
+                        });
+                    }
+                });
+            });
         }
+        
 
 
     },

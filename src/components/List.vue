@@ -52,6 +52,10 @@ const onDrop = (e) => {
   const { cardId, oldListId } = JSON.parse(jsonData);
   const newListId = list.value.id;
 
+  // if (oldListId === newListId) {
+  //   return;
+  // }
+
   boardStore.updateCardListId(cardId, newListId, oldListId);
 };
 
