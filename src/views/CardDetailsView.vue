@@ -1,20 +1,38 @@
 <script setup>
 import CardModal from '../components/CardModal.vue';
 import { useBoardStore } from '@/stores/boards.store';
+import { useUsersStore } from '@/stores/users.store';
 import { storeToRefs } from 'pinia'
-import { onMounted, computed } from 'vue';
+import { onMounted, computed, ref } from 'vue';
 import router from "@/router";
 import { useRoute } from 'vue-router';
 
 const boardStore = useBoardStore();
+const userStore = useUsersStore();
 const route = useRoute();
+const comment = ref('');
+
 
 const { card } = storeToRefs(boardStore);
 const list = computed(() => boardStore.fullBoard?.lists?.find(list => list.id === card.value.list_id));
+const addingCheckList = ref(false);
+const newChecklist = ref('');
 
 const closeCard = () => {
     // boardStore.setActiveCard(null);
     router.push({ name: 'BoardDetails', params: { id: boardStore.fullBoard.id } });
+};
+
+const addComment = async () => {
+    if (comment.value.length < 1) {
+        console.log('Comment must be at least 1 character.');
+        return;
+    }
+    const newComment = {
+        comment: comment.value,
+    };
+    await boardStore.addComment(newComment);
+    comment.value = '';
 };
 
 onMounted(async () => {
@@ -28,6 +46,102 @@ const onCheckList = async (checklist) => {
     checklist.is_checked = !checklist.is_checked;
     await boardStore.updateCheckList(checklist);
 };
+
+const addCheckList = async () => {
+    if (newChecklist.value.length < 1) {
+        console.log('Title must be at least 1 character.');
+        return;
+    }
+    const newChecklistObj = {
+        title: newChecklist.value,
+        position: 0,
+        is_checked: false
+    };
+    await boardStore.addCheckList(newChecklistObj);
+    newChecklist.value = '';
+    addingCheckList.value = false;
+};
+
+
+const deleteChecklist = async (e, checklistId) => {
+    e.preventDefault();
+    await boardStore.deleteCheckList(checklistId);
+};
+
+const deleteMessage = async (messageId) => {
+    await boardStore.deleteMessage(messageId);
+};
+
+const toggleEditComment = async (comment) => {
+    comment.editingMessage = !comment.editingMessage;
+};
+
+const UpdateMessage = async (message) => {
+    let newMessage = document.getElementById(`message${message.id}`).innerText.trim();
+    // if new title is the same as the old title, do nothing
+    if (newMessage === message.comment) {
+        console.log('Message is the same.');
+        // reset title
+        document.getElementById(`message${message.id}`).innerText = message.comment;
+    } else {
+
+        await boardStore.updateMessage({
+            comment: newMessage,
+            id: message.id
+        });
+    }
+    toggleEditComment(message);
+};
+
+function validateText(e, text) {
+    // validate title 
+    if (text.length < 1) {
+        console.log('Title must be at least 1 character.');
+        e.target.innerText = list.value.name;
+        false;
+    }
+    
+    return true;
+}
+
+const onChangeTitle = (e) => {
+    let newTitle = e.target.innerText.trim();
+    if (!validateText(e, newTitle)) return;
+    if (newTitle === card.value.title) {
+        console.log('Title is the same.');
+        // reset title
+        e.target.innerText = card.value.title;
+        return
+    }
+    boardStore.updateCardTitle({
+        title: newTitle,
+    });
+
+}
+
+
+const handleEnterButton = (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.target.blur();
+    }
+};
+
+const onChangeDescription = (e) => {
+    let newDescription = e.target.innerHTML.trim();
+    if (!validateText(e, newDescription)) return;
+
+    if (newDescription === card.value.description) {
+        console.log('description is the same.');
+        // reset title
+        e.target.innerHTML = card.value.description;
+        return
+    }
+
+    boardStore.updateCardDescription({
+        description: newDescription,
+    });
+}
 
 
 </script>
@@ -44,7 +158,8 @@ const onCheckList = async (checklist) => {
                 </div>
                 <div class="space-y-4">
                     <div>
-                        <h1 class="text-2xl font-bold">{{ card.title }}</h1>
+                        <h1 class="text-2xl font-bold" @blur="onChangeTitle" contenteditable="true"
+                            @keypress="handleEnterButton">{{ card.title }}</h1>
                         <p>in list - <b class="mr-2">{{ list?.name }}</b>
                             <i v-if="card.is_active" class="fas fa-eye"></i>
                             <i v-else class="fas fa-eye-slash"></i>
@@ -89,7 +204,7 @@ const onCheckList = async (checklist) => {
                                 <p class="text-gray-600">{{ card.due_date }}</p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-4" v-if=" card.reminder_datetime">
+                        <div class="flex items-center space-x-4" v-if="card.reminder_datetime">
                             <div>
                                 <!-- Reminder Icon -->
                                 <div class="text-gray-600 mr-3">
@@ -102,7 +217,10 @@ const onCheckList = async (checklist) => {
 
                     <div>
                         <b>Description</b>
-                        <p class="text-gray-600 mb-4">{{ card.description }}</p>
+                        <p class="text-gray-600 mb-4" @blur="onChangeDescription" contenteditable="true"
+                        v-html="card.description"
+                           >
+                        </p>
                     </div>
 
 
@@ -112,13 +230,32 @@ const onCheckList = async (checklist) => {
         <template v-slot:body>
             <div class="max-w-md w-full space-y-8">
                 <div>
-                    <h2 class="text-lg font-bold mb-2">Checklists</h2>
+                    <h2 class="text-lg font-bold mb-2">Check lists <i v-if="addingCheckList"
+                            @click="addingCheckList = false" class="fa fa-close hover:cursor-pointer"
+                            style="color: green; "></i> <i v-else @click="addingCheckList = true"
+                            class="fa fa-add hover:cursor-pointer" style="color: green; "></i>
+                    </h2>
                     <ul class="list-disc list-inside space-y-2">
                         <!-- Vue loop through checklists -->
+
+                        <label v-show="addingCheckList" class="flex items-center space-x-2">
+                            <div class="flex items-center ">
+                                <input type="text" id="small-input" v-model="newChecklist"
+                                    class="block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500">
+                                <button @click="addCheckList"
+                                    class="block py-1 px-2 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
+                                    aria-current="page">Add</Button>
+                            </div>
+                        </label>
                         <li v-for="checklist in card.check_lists" :key="checklist.id" class="list-none">
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox"  @change="onCheckList(checklist)" :checked="checklist.is_checked" class="form-checkbox">
-                                <span>{{ checklist.title }}</span>
+                            <label class="flex items-center ">
+                                <input type="checkbox" @change="onCheckList(checklist)" :checked="checklist.is_checked"
+                                    class="form-checkbox">
+                                <div class="flex items-center justify-between space-x-4">
+                                    <span class="ml-3 ">{{ checklist.title }}</span>
+                                    <p><i @click="deleteChecklist($event, checklist.id)"
+                                            class="fa fa-trash hover:cursor-pointer"></i></p>
+                                </div>
                             </label>
                         </li>
                     </ul>
@@ -127,14 +264,55 @@ const onCheckList = async (checklist) => {
                 <!-- Comments -->
                 <div>
                     <h2 class="text-lg font-bold mb-2">Comments</h2>
-                    <ul class="space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <div class="flex items-center ">
+                            <input type="text" id="small-input" v-model="comment"
+                                class="block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500">
+                            <button @click="addComment"
+                                class="block py-1 px-2 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
+                                aria-current="page">Send</Button>
+                        </div>
+                    </label>
+                    <ul class="space-y-2 my-2">
                         <!-- Vue loop through comments -->
-                        <li v-for="comment in card.comments" :key="comment.id" class="flex space-x-2">
-                            <div class="text-gray-600">
-                                <i class="fas fa-comment"></i>
+                        <div v-for="comment in card.comments" :key="comment.id"
+                            class="mb-3 border p-2 flex justify-between">
+                            <li>
+                                <div class="flex space-x-2">
+                                    <div class="text-gray-600">
+                                        <i class="fas fa-comment"></i>
+                                    </div>
+                                    <p class="text-gray-600">{{ comment.created_datetime }}</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <div
+                                        class="w-7 h-7 rounded-full bg-blue-500 text-white mr-1 flex items-center justify-center font-semibold">
+                                        {{ comment.user.username.slice(0, 2).toUpperCase() }}
+                                    </div>
+                                    <p :id="`message${comment.id}`" class="text-gray-600 ps-3 w-full"
+                                        :contenteditable="comment.editingMessage">{{
+                                            comment.comment }}</p>
+                                </div>
+
+                            </li>
+                            <div v-if="userStore.user.id === comment.user_id" class="space-y-2">
+                                <span @click="deleteMessage(comment.id)" class="hover:cursor-pointer"><i
+                                        class="fa fa-trash"></i></span>
+                                <div v-if="comment.editingMessage">
+                                    <div @click="UpdateMessage(comment)" class="hover:cursor-pointer">
+                                        <i class="fa fa-paper-plane"></i>
+                                    </div>
+
+                                </div>
+                                <div v-else>
+                                    <div @click="toggleEditComment(comment)" class="hover:cursor-pointer">
+                                        <i class="fa fa-edit"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <p class="text-gray-600">{{ comment.comment }}</p>
-                        </li>
+
+                        </div>
+
                     </ul>
                 </div>
             </div>

@@ -54,9 +54,9 @@
 
     flex-shrink: 0;
 
-    /* height: 100vh; */
-    min-height: 60%;
-    max-height: 100%;
+    height: 100vh;
+    min-height: 60vh;
+    max-height: 100vh;
     
     margin: 0px auto;
     padding: 5px 10px 5px 30px;
