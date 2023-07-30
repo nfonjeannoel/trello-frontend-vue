@@ -77,12 +77,12 @@ const toggleEditComment = async (comment) => {
 };
 
 const UpdateMessage = async (message) => {
-    let newMessage = document.getElementById(`message${message.id}`).innerText.trim();
+    let newMessage = document.getElementById(`message${message.id}`).innerHTML.trim();
     // if new title is the same as the old title, do nothing
     if (newMessage === message.comment) {
         console.log('Message is the same.');
         // reset title
-        document.getElementById(`message${message.id}`).innerText = message.comment;
+        document.getElementById(`message${message.id}`).innerHTML = message.comment;
     } else {
 
         await boardStore.updateMessage({
@@ -93,6 +93,11 @@ const UpdateMessage = async (message) => {
     toggleEditComment(message);
 };
 
+const discardComment = (message) => {
+    document.getElementById(`message${message.id}`).innerHTML = message.comment;
+    toggleEditComment(message);
+};
+
 function validateText(e, text) {
     // validate title 
     if (text.length < 1) {
@@ -100,9 +105,71 @@ function validateText(e, text) {
         e.target.innerText = list.value.name;
         false;
     }
-    
+
     return true;
 }
+
+const showInput = ref(false);
+const labelName = ref('');
+const labelColor = ref('#000000');
+const editingLabel = ref(false);
+let currentLabelId = null;
+let cardLabelId = null;
+
+const editLabel = (label) => {
+    // Set the editingLabel flag to true to indicate that we are editing an existing label
+    editingLabel.value = true;
+    currentLabelId = label.board_label.id;
+    cardLabelId = label.id;
+
+    // Populate the input fields with the label name and color
+    labelName.value = label.board_label.name;
+    labelColor.value = label.board_label.color;
+
+    // Show the input section
+    showInput.value = true;
+};
+
+function resetFilds() {
+    labelName.value = '';
+    labelColor.value = '#000000';
+    showInput.value = false;
+    editingLabel.value = false;
+    currentLabelId = null;
+    cardLabelId = null;
+}
+
+const addOrUpdateLabel = () => {
+    // Assuming you have a method to add the new label to the card.labels array
+    if (editingLabel.value) {
+        // Update the label if editing an existing one
+        boardStore.updateBoardLabel(currentLabelId, {
+            name: labelName.value,
+            color: labelColor.value
+        });
+    } else {
+
+        const board_label = {
+            name: labelName.value,
+            color: labelColor.value
+        }
+
+        boardStore.addBoardLabel(board_label);
+    }
+
+
+    // Reset the input fields and hide the input section
+    resetFilds();
+};
+
+
+const deleteCardLabel = () => {
+    // Assuming you have a method to remove the label from the card.labels array
+    boardStore.deleteCardLabel(cardLabelId);
+
+    // Reset the input fields and hide the input section
+    resetFilds();
+};
 
 const onChangeTitle = (e) => {
     let newTitle = e.target.innerText.trim();
@@ -144,6 +211,14 @@ const onChangeDescription = (e) => {
 }
 
 
+const toggleShowInput = () => {
+    if (!showInput.value) {
+        // Reset the input fields
+        resetFilds();
+    }
+    showInput.value = !showInput.value;
+};
+
 </script>
 
 <template>
@@ -170,7 +245,7 @@ const onChangeDescription = (e) => {
 
                     <div class="flex justify-start items-center">
                         <div>
-                            <b>Members</b>
+                            <b>Members</b> <i class="fa fa-add" style="color: green; "></i>
                             <div class="flex justify-between items-center mr-10 h-7">
 
                                 <div v-for="member in card.card_members" :key="member.id"
@@ -178,20 +253,31 @@ const onChangeDescription = (e) => {
                                     class="w-7 h-7 rounded-full bg-blue-500 text-white mr-1 flex items-center justify-center font-semibold">
                                     {{ member.user.username.slice(0, 2).toUpperCase() }}
                                 </div>
-                                <i class="fa fa-add" style="color: green; "></i>
+
                             </div>
                         </div>
                         <div>
-                            <b>Labels</b>
-                            <div class="flex justify-between items-center mr-10 h-7">
-
-                                <div v-for="label in card.label" :key="label.id" v-if="card.label?.length > 0"
-                                    class="w-7 h-7 rounded-full bg-blue-500 text-white mr-1 flex items-center justify-center font-semibold">
-                                    label
-                                </div>
-                                <i class="fa fa-add" style="color: green; "></i>
+                            <b>Labels </b>
+                            <i v-if="showInput" class="fa fa-close" style="color: green;" @click="toggleShowInput"></i>
+                            <i v-else class="fa fa-add" style="color: green;" @click="toggleShowInput"></i>
+                            <div v-show="showInput" class="p-2">
+                                <input v-model="labelName" placeholder="Label Name" />
+                                <input type="color" v-model="labelColor" class="me-2" />
+                                <button @click="addOrUpdateLabel" class="font-bold mr-2">{{ editingLabel ? 'Update Label' :
+                                    'Add Label' }}</button>
+                                <button @click="deleteCardLabel" class="font-bold">Delete</button>
                             </div>
+                            <div class="flex justify-between items-center mr-10 h-7">
+                                <div v-for="label in card.labels" :key="label.id" v-if="card.labels?.length > 0"
+                                    :style="{ backgroundColor: label.board_label.color }" @click="editLabel(label)"
+                                    class="h-7 text-white mr-1 flex items-center justify-center font-semibold mx-1 px-1">
+                                    {{ label.board_label.name }}
+                                </div>
+                            </div>
+
+
                         </div>
+
                     </div>
                     <div class="flex items-center justify-start">
                         <!-- Icons -->
@@ -218,8 +304,7 @@ const onChangeDescription = (e) => {
                     <div>
                         <b>Description</b>
                         <p class="text-gray-600 mb-4" @blur="onChangeDescription" contenteditable="true"
-                        v-html="card.description"
-                           >
+                            v-html="card.description">
                         </p>
                     </div>
 
@@ -276,7 +361,7 @@ const onChangeDescription = (e) => {
                     <ul class="space-y-2 my-2">
                         <!-- Vue loop through comments -->
                         <div v-for="comment in card.comments" :key="comment.id"
-                            class="mb-3 border p-2 flex justify-between">
+                            class="mb-3 border p-2 flex justify-between w-[600px]">
                             <li>
                                 <div class="flex space-x-2">
                                     <div class="text-gray-600">
@@ -284,15 +369,19 @@ const onChangeDescription = (e) => {
                                     </div>
                                     <p class="text-gray-600">{{ comment.created_datetime }}</p>
                                 </div>
-                                <div class="flex items-center">
+                                <div class="flex items-center mb-2">
                                     <div
                                         class="w-7 h-7 rounded-full bg-blue-500 text-white mr-1 flex items-center justify-center font-semibold">
                                         {{ comment.user.username.slice(0, 2).toUpperCase() }}
                                     </div>
-                                    <p :id="`message${comment.id}`" class="text-gray-600 ps-3 w-full"
+                                    <p :id="`message${comment.id}`"
+                                        class="text-gray-600 ps-3 whitespace-wrap break-words max-w-[500px]"
                                         :contenteditable="comment.editingMessage">{{
                                             comment.comment }}</p>
                                 </div>
+                                <button v-show="comment.editingMessage" @click="discardComment(comment)"
+                                    class="block py-1 px-2 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0">Discard
+                                    changes</button>
 
                             </li>
                             <div v-if="userStore.user.id === comment.user_id" class="space-y-2">

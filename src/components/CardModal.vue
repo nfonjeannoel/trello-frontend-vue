@@ -2,7 +2,7 @@
 
     <div class="modal-mask fixed z-50 top-0 left-0 w-full h-full bg-black  flex items-center justify-center ">
       <div class="modal-wrapper table">
-        <div class="modal-container bg-white w-[80%] rounded-md shadow-lg p-5 overflow-y-scroll flex-shrink-0">
+        <div class="modal-container bg-white w-[80%] rounded-md shadow-lg p-5 overflow-y-scroll flex-shrink-0 flex-wrap">
             
 
           <div class="modal-header">

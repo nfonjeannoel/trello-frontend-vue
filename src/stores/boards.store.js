@@ -9,6 +9,7 @@ const listBaseUrl = `http://127.0.0.1:8000/lists`
 const cardBaseUrl = `http://127.0.0.1:8000/cards`
 const checkListBaseUrl = `http://127.0.0.1:8000/checklists`
 const commentBaseUrl = `http://127.0.0.1:8000/comments`
+const cardLabelBaseUrl = `http://127.0.0.1:8000/card_labels`
 
 export const useBoardStore = defineStore({
     id: 'board',
@@ -154,7 +155,51 @@ export const useBoardStore = defineStore({
                 }
             });
 
-        }
+        },
+        async addCardLabel(label_id) {
+            let newLabel = await fetchWrapper.post(`${cardLabelBaseUrl}/${this.fullBoard.id}/${this.card.id}/${label_id}/add_card_label`);
+            this.card.labels.push(newLabel);
+            // console.log(newLabel);
+        },
+        
+
+        async addBoardLabel(label) {
+            let newLabel = await fetchWrapper.post(`${baseUrl}/${this.fullBoard.id}/labels`, label);
+            this.addCardLabel(newLabel.id);
+            // console.log(newLabel);
+        },
+
+        async updateBoardLabel(label_id, label) {
+            let newLabel = await fetchWrapper.put(`${baseUrl}/${this.fullBoard.id}/labels/${label_id}`, label);
+            this.card.labels.forEach((label, index) => {
+                if (label.board_label.id === newLabel.id) {
+                    // update the name and color of the label
+                    this.card.labels[index].board_label.name = newLabel.name;
+                    this.card.labels[index].board_label.color = newLabel.color;
+                }
+            });
+        },
+
+        async deleteCardLabel(label_id) {
+            await fetchWrapper.delete(`${cardLabelBaseUrl}/${this.fullBoard.id}/${this.card.id}/${label_id}/delete_card_label`);
+            this.card.labels.forEach((label, index) => {
+                if (label.id === label_id) {
+                    this.card.labels.splice(index, 1);
+                }
+            });
+
+
+        },
+
+        // async deleteBoardLabel(label_id, cardLabelId) {
+        //     await fetchWrapper.delete(`${baseUrl}/${this.fullBoard.id}/labels/${label_id}`);
+        //     await this.deleteCardLabel(cardLabelId);
+        //     this.card.labels.forEach((label, index) => {
+        //         if (label.board_label.id === label_id) {
+        //             this.card.labels.splice(index, 1);
+        //         }
+        //     });
+        // },
 
 
     },
