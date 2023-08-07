@@ -2,15 +2,20 @@
 
 <template>
   <!-- <CardModal @emitClose="showMore = false" v-if="showMore" /> -->
-  <div class="card bg-white rounded-lg p-4 mt-2 shadow-md transition-shadow hover:shadow-xl" @click="handleShowMore">
+  <div class="card bg-white rounded-lg p-4 mt-2 shadow-md transition-shadow hover:shadow-xl"
+   draggable="true"
+  :class="{ 'scaler': isDragging }"
+    @dragstart="onDragCard($event, card)" @click="handleShowMore"
+    @dragend="onDragEnd">
+    
     <h3 class="text-lg font-medium mb-2">{{ truncate(card.title, 50, '...') }}</h3>
     <div class="text-gray-600 mb-2">
-      <p>{{ truncate(card.description, 50, '...') }}</p>
+      <!-- <p>{{ truncate(card.description, 50, '...') }}</p> -->
       <p v-if="card.due_date" class="mt-2 flex items-center">
         <i class="far fa-calendar-alt mr-1"></i> Due: {{ card.due_date }}
       </p>
     </div>
-    <div v-if="card.card_members.length > 0">
+    <div v-if="card.card_members?.length > 0">
       <div class="flex items-center mt-2">
         <i class="fas fa-user mr-1 text-gray-500"></i>
         <div v-for="member in card.card_members" :key="member.id" class="flex items-center mr-2">
@@ -40,7 +45,7 @@ import { useBoardStore } from '@/stores/boards.store';
 import { ref } from 'vue';
 import { toRefs } from 'vue';
 import router from '@/router';
-
+let isDragging = ref(false);
 
 
 const props = defineProps(['card']);
@@ -60,11 +65,27 @@ function truncate(text, length, suffix) {
 const handleShowMore = () => {
   // showMore.value = true;
   boardStore.setActiveCard(card.value);
-  router.push({ name: 'CardDetails', params: {
-    id: boardStore.fullBoard.id,
-    cardId: card.value.id,  
-   }});
+  router.push({
+    name: 'CardDetails', params: {
+      id: boardStore.fullBoard.id,
+      cardId: card.value.id,
+    }
+  });
 };
+
+const onDragCard = (e, card) => {
+  const data = {
+    cardId: card.id,
+    oldListId: card.list_id,
+  }
+  e.dataTransfer.setData('text/plain', JSON.stringify(data));
+  isDragging.value = true;
+};
+
+function onDragEnd() {
+      // Remove the class when dragging ends
+      isDragging.value = false;
+    }
 
 // Function to generate hash code for email
 const hashCode = (s) =>
@@ -87,5 +108,16 @@ i.fa-check,
 i.fa-times {
   font-size: 0.75rem;
 }
+
+/* Add a nice shadow transition for the card */
+/* Apply custom styles when dragging */
+.scaler:hover {
+  transform: scale(1.1) rotate(2deg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: grabbing;
+  opacity: 0.8; /* Reduce opacity slightly on hover (you can adjust the value as needed) */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; /* Add smooth transitions */
+}
+
 </style>
   

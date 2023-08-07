@@ -58,12 +58,8 @@ const displayedMembers = computed(() => {
 
 
   // Loop through all the cards and collect unique members
-  board.lists?.forEach((list) => {
-    list.cards?.forEach((card) => {
-      card.card_members?.forEach((member) => {
-        uniqueMembers.value.add(member.user.username);
-      });
-    });
+  boardStore.fullBoard.board_members?.forEach((member) => {
+    uniqueMembers.value.add(member.user.username);
   });
 
   // Convert the unique members set to an array

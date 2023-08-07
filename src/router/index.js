@@ -9,6 +9,7 @@ import BoardsView from '../views/BoardsView.vue'
 import BoardDetailsView from '../views/BoardDetailsView.vue'
 import CardDetailsView from '../views/CardDetailsView.vue'
 import { useAuthStore } from '@/stores/auth.store';
+import {useUsersStore} from '@/stores/users.store';
 
 
 const router = createRouter({
@@ -93,11 +94,12 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, from) => {
   // redirect to login page if not logged in and trying to access a restricted page
   const isPublic = to.meta.public || false
   // const authRequired = !publicPages.includes(to.path);
   const auth = useAuthStore();
+  const userStore = useUsersStore();
 
 
   if (isPublic) {
@@ -109,6 +111,14 @@ router.beforeEach(async (to) => {
     }
   }
 
+  if (["login", "signup"].includes(from.name)) {
+    // fetch user data
+    // console.log("from login or signup")
+    await userStore.getCurrentUser();
+  }
+
+  await userStore.getCurrentUser(true);
+ 
 });
 
 export default router

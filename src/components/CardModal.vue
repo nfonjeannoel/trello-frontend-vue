@@ -1,36 +1,31 @@
 <template type="text/x-template" id="modal-template">
-    <div class="modal-mask">
-        <div class="modal-wrapper">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <slot name="header">
-                        default header
-                    </slot>
-                </div>
 
-                <div class="modal-body">
-                    <slot name="body">
-                        default body
-                    </slot>
-                </div>
+    <div class="modal-mask fixed z-50 top-0 left-0 w-full h-full bg-black  flex items-center justify-center ">
+      <div class="modal-wrapper table">
+        <div class="modal-container bg-white w-[80%] rounded-md shadow-lg p-5 overflow-y-scroll flex-shrink-0 flex-wrap">
+            
 
-                <div class="modal-footer">
-                    <slot name="footer">
-                        <button class="modal-default-button" @click="emitClose">OK</button>
-                    </slot>
-                </div>
-            </div>
+          <div class="modal-header">
+            <slot name="header">Default Header</slot>
+          </div>
+          <div class="modal-body">
+            <slot name="body">Default Body</slot>
+          </div>
+          <div class="modal-footer">
+            <slot name="footer"></slot>
+          </div>
         </div>
+      </div>
     </div>
-</template>
+  </template>
 
 <script setup >
-const emit = defineEmits(['close']);
+// const emit = defineEmits(['close']);
 
-const emitClose = () => {
-    // Emit the 'close' event to notify the parent component to close the modal
-    emit('close');
-};
+// const emitClose = () => {
+//     // Emit the 'close' event to notify the parent component to close the modal
+//     emit('close');
+// };
 </script>
 
 
@@ -53,9 +48,18 @@ const emitClose = () => {
 }
 
 .modal-container {
-    width: 300px;
+    width: 700px;
+    min-width: 700px;
+    max-width: 700px;
+
+    flex-shrink: 0;
+
+    height: 100vh;
+    min-height: 60vh;
+    max-height: 100vh;
+    
     margin: 0px auto;
-    padding: 20px 30px;
+    padding: 5px 10px 5px 30px;
     background-color: #fff;
     border-radius: 2px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
