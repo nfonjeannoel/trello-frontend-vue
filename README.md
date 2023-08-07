@@ -8,6 +8,11 @@ Trello is the visual tool that empowers your team to manage any type of project,
 
 This template should help get you started developing with Vue 3 in Vite.
 
+## Tools used
+
+- Vuejs
+- Tailwindcss
+
 ## Recommended IDE Setup
 
 [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
@@ -15,6 +20,14 @@ This template should help get you started developing with Vue 3 in Vite.
 ## Customize configuration
 
 See [Vite Configuration Reference](https://vitejs.dev/config/).
+
+## To contribute to trello-frontend
+
+- Fork this repository [here](https://github.com/nfonjeannoel/trello-frontend-vue.git)
+- Clone your local copy i.e 
+    https://github.com/YourUsername/trello-frontend-vue.git
+- create a branch and switch to it using  git checkout -b yourBranchName
+- Make changes commit push then pull request. 
 
 ## Project Setup
 
