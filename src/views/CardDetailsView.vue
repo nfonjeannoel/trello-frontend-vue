@@ -12,11 +12,29 @@ const userStore = useUsersStore();
 const route = useRoute();
 const comment = ref('');
 
-
+// ISSUE
+// when adding comment, save it as html
 const { card } = storeToRefs(boardStore);
 const list = computed(() => boardStore.fullBoard?.lists?.find(list => list.id === card.value.list_id));
+const boardMembers = computed(() => boardStore.fullBoard?.board_members);
 const addingCheckList = ref(false);
 const newChecklist = ref('');
+
+// create computed messages property. This property will hold card comments and card activities.
+// Parse the date created and sort them by date created. newest first
+
+const messages = computed(() => {
+    const comments = boardStore.card.comments;
+    const activities = boardStore.card.card_activities;
+    if (comments || activities) {
+        console.log('comments', comments);
+        console.log('activities', activities);
+        const combined_messages = [...(comments || []), ...(activities || [])];
+        combined_messages.sort((a, b) => new Date(b.created_datetime) - new Date(a.created_datetime));
+        return combined_messages;
+    }
+});
+
 
 const closeCard = () => {
     // boardStore.setActiveCard(null);
@@ -82,7 +100,7 @@ const UpdateMessage = async (message) => {
     if (newMessage === message.comment) {
         console.log('Message is the same.');
         // reset title
-        document.getElementById(`message${message.id}`).innerHTML = message.comment;
+        document.getElementById(`message${message.id}`).innerText = message.comment;
     } else {
 
         await boardStore.updateMessage({
@@ -115,6 +133,13 @@ const labelColor = ref('#000000');
 const editingLabel = ref(false);
 let currentLabelId = null;
 let cardLabelId = null;
+
+
+const showMembers = ref(false);
+
+const toggleShowMembers = () => {
+    showMembers.value = !showMembers.value;
+};
 
 const editLabel = (label) => {
     // Set the editingLabel flag to true to indicate that we are editing an existing label
@@ -219,6 +244,18 @@ const toggleShowInput = () => {
     showInput.value = !showInput.value;
 };
 
+
+const isMemberOfCard = (memberId) => {
+    return card.value.card_members.some(member => member.user.id === memberId);
+};
+
+const toggleMember = (member) => {
+    if (isMemberOfCard(member.user.id)) {
+        boardStore.removeMemberFromCard(member.user.email);
+    } else {
+        boardStore.addMemberToCard(member.user.email);
+    }
+};
 </script>
 
 <template>
@@ -243,9 +280,19 @@ const toggleShowInput = () => {
 
                     <!-- members -->
 
-                    <div class="flex justify-start items-center">
+                    <div class="flex justify-start items-center space-x-8">
                         <div>
-                            <b>Members</b> <i class="fa fa-add" style="color: green; "></i>
+                            <b>Members </b>
+                            <i v-if="showMembers" class="fa fa-close" style="color: green;" @click="toggleShowMembers"></i>
+                            <i v-else class="fa fa-add" style="color: green;" @click="toggleShowMembers"></i>
+                            <div v-show="showMembers" class="p-2">
+                                <!-- checkbox for each member of the board. If user is member of card, it shoul dbe checked -->
+                                <div v-for="member in boardMembers" :key="member.id" class="flex items-center">
+                                    <input type="checkbox" :checked="isMemberOfCard(member.user.id)"
+                                        @change="toggleMember(member)">
+                                    <p class="ml-2">{{ member.user.username }}</p>
+                                </div>
+                            </div>
                             <div class="flex justify-between items-center mr-10 h-7">
 
                                 <div v-for="member in card.card_members" :key="member.id"
@@ -265,7 +312,7 @@ const toggleShowInput = () => {
                                 <input type="color" v-model="labelColor" class="me-2" />
                                 <button @click="addOrUpdateLabel" class="font-bold mr-2">{{ editingLabel ? 'Update Label' :
                                     'Add Label' }}</button>
-                                <button @click="deleteCardLabel" class="font-bold">Delete</button>
+                                <button v-if="editingLabel" @click="deleteCardLabel" class="font-bold">Delete</button>
                             </div>
                             <div class="flex justify-between items-center mr-10 h-7">
                                 <div v-for="label in card.labels" :key="label.id" v-if="card.labels?.length > 0"
@@ -351,8 +398,8 @@ const toggleShowInput = () => {
                     <h2 class="text-lg font-bold mb-2">Comments</h2>
                     <label class="flex items-center space-x-2">
                         <div class="flex items-center ">
-                            <input type="text" id="small-input" v-model="comment"
-                                class="block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500">
+                            <textarea type="text" id="small-input" v-model="comment"
+                                class="block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500"></textarea>
                             <button @click="addComment"
                                 class="block py-1 px-2 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
                                 aria-current="page">Send</Button>
@@ -360,42 +407,47 @@ const toggleShowInput = () => {
                     </label>
                     <ul class="space-y-2 my-2">
                         <!-- Vue loop through comments -->
-                        <div v-for="comment in card.comments" :key="comment.id"
-                            class="mb-3 border p-2 flex justify-between w-[600px]">
-                            <li>
-                                <div class="flex space-x-2">
-                                    <div class="text-gray-600">
-                                        <i class="fas fa-comment"></i>
-                                    </div>
-                                    <p class="text-gray-600">{{ comment.created_datetime }}</p>
-                                </div>
-                                <div class="flex items-center mb-2">
-                                    <div
-                                        class="w-7 h-7 rounded-full bg-blue-500 text-white mr-1 flex items-center justify-center font-semibold">
-                                        {{ comment.user.username.slice(0, 2).toUpperCase() }}
-                                    </div>
-                                    <p :id="`message${comment.id}`"
-                                        class="text-gray-600 ps-3 whitespace-wrap break-words max-w-[500px]"
-                                        :contenteditable="comment.editingMessage">{{
-                                            comment.comment }}</p>
-                                </div>
-                                <button v-show="comment.editingMessage" @click="discardComment(comment)"
-                                    class="block py-1 px-2 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0">Discard
-                                    changes</button>
+                        <div v-for="comment in messages" :key="comment.id"
+                            class="">
+                            <div v-if="comment.activity">
+                                <p>{{comment.activity}} -- {{comment.created_datetime}}</p>
+                            </div>
+                            <div v-else class="mb-3 border p-2 flex justify-between w-[600px]">
 
-                            </li>
-                            <div v-if="userStore.user.id === comment.user_id" class="space-y-2">
-                                <span @click="deleteMessage(comment.id)" class="hover:cursor-pointer"><i
-                                        class="fa fa-trash"></i></span>
-                                <div v-if="comment.editingMessage">
-                                    <div @click="UpdateMessage(comment)" class="hover:cursor-pointer">
-                                        <i class="fa fa-paper-plane"></i>
+                                <li>
+                                    <div class="flex space-x-2">
+                                        <div class="text-gray-600">
+                                            <i class="fas fa-comment"></i>
+                                        </div>
+                                        <p class="text-gray-600">{{ comment.created_datetime }}</p>
                                     </div>
+                                    <div class="flex items-center mb-2">
+                                        <div
+                                            class="w-7 h-7 rounded-full bg-blue-500 text-white mr-1 flex items-center justify-center font-semibold">
+                                            {{ comment.user.username.slice(0, 2).toUpperCase() }}
+                                        </div>
+                                        <p :id="`message${comment.id}`"
+                                            class="text-gray-600 ps-3 whitespace-wrap break-words max-w-[500px]"
+                                            :contenteditable="comment.editingMessage" v-html="comment.comment"></p>
+                                    </div>
+                                    <button v-show="comment.editingMessage" @click="discardComment(comment)"
+                                        class="block py-1 px-2 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0">Discard
+                                        changes</button>
 
-                                </div>
-                                <div v-else>
-                                    <div @click="toggleEditComment(comment)" class="hover:cursor-pointer">
-                                        <i class="fa fa-edit"></i>
+                                </li>
+                                <div v-if="userStore.user.id === comment.user_id" class="space-y-2">
+                                    <span @click="deleteMessage(comment.id)" class="hover:cursor-pointer"><i
+                                            class="fa fa-trash"></i></span>
+                                    <div v-if="comment.editingMessage">
+                                        <div @click="UpdateMessage(comment)" class="hover:cursor-pointer">
+                                            <i class="fa fa-paper-plane"></i>
+                                        </div>
+
+                                    </div>
+                                    <div v-else>
+                                        <div @click="toggleEditComment(comment)" class="hover:cursor-pointer">
+                                            <i class="fa fa-edit"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

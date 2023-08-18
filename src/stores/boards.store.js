@@ -10,6 +10,7 @@ const cardBaseUrl = `http://127.0.0.1:8000/cards`
 const checkListBaseUrl = `http://127.0.0.1:8000/checklists`
 const commentBaseUrl = `http://127.0.0.1:8000/comments`
 const cardLabelBaseUrl = `http://127.0.0.1:8000/card_labels`
+const cardMemberBaseUrl = `http://127.0.0.1:8000/card_members`
 
 export const useBoardStore = defineStore({
     id: 'board',
@@ -200,6 +201,47 @@ export const useBoardStore = defineStore({
         //         }
         //     });
         // },
+
+        async removeMemberFromCard(memberEmail){
+            await fetchWrapper.delete(`${cardMemberBaseUrl}/${this.fullBoard.id}/${this.card.id}/delete_card_member`,{
+                email: memberEmail
+            });
+            this.card.card_members.forEach((member, index) => {
+                if (member.user.email === memberEmail) {
+                    this.card.card_members.splice(index, 1);
+                }
+            });
+
+            this.fullBoard.lists.forEach((list, listIndex) => {
+                if (list.id === this.card.list_id) {
+                    this.fullBoard.lists[listIndex].cards.forEach((card, cardIndex) => {
+                        if (card.id === this.card.id) {
+                            this.fullBoard.lists[listIndex].cards[cardIndex].card_members.forEach((member, memberIndex) => {
+                                if (member.user.email === memberEmail) {
+                                    this.fullBoard.lists[listIndex].cards[cardIndex].card_members.splice(memberIndex, 1);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        },
+
+        async addMemberToCard(memberEmail) {
+            let newMember = await fetchWrapper.post(`${cardMemberBaseUrl}/${this.fullBoard.id}/${this.card.id}/add_member`, {
+                email: memberEmail
+            });
+            this.card.card_members.push(newMember);
+            this.fullBoard.lists.forEach((list, listIndex) => {
+                if (list.id === this.card.list_id) {
+                    this.fullBoard.lists[listIndex].cards.forEach((card, cardIndex) => {
+                        if (card.id === this.card.id) {
+                            this.fullBoard.lists[listIndex].cards[cardIndex].card_members.push(newMember);
+                        }
+                    });
+                }
+            });
+        }
 
 
     },
