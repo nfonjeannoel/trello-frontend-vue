@@ -4,6 +4,7 @@ import { ref } from "vue";
 import axios from "axios";
 import router from "@/router";
 import { useAuthStore } from '@/stores/auth.store';
+import Footer from '@/components/Footer.vue'
 
 const username = ref("");
 const password = ref("");
@@ -52,6 +53,10 @@ let loading = ref(false)
 
 function loginUser() {
   const authStore = useAuthStore();
+  if (!username.value || !password.value) {
+    console.log("Please fill in all fields.");
+    return;
+  }
   return authStore.login(username.value, password.value)
     .catch(error => {
       console.log(error)
@@ -61,71 +66,57 @@ function loginUser() {
 </script>
 
 <template>
-  <section class="bg-gray-50 dark:bg-gray-900">
-    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-      <RouterLink to="/" class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-        <img class="w-25 h-25 mr-2" src="@/assets/logo.svg" alt="logo">
+  <main >
+    <div class="d-flex flex-column  justify-content-between px-3 pt-5" style="height: 100vh;">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-auto col-lg-auto d-none d-lg-block"></div>
+        <div class="col-12 col-md-6 col-lg-4 card py-5 px-lg-3">
+          <header class="d-flex justify-content-center py-3">
+            <RouterLink class="" to="/">
+              <img style="width: 150px; height: auto;" class="img-fluid h-auto"
+                src="https://d2k1ftgv7pobq7.cloudfront.net/meta/c/p/res/images/trello-header-logos/167dc7b9900a5b241b15ba21f8037cf8/trello-logo-blue.svg">
+            </RouterLink>
+          </header>
 
-      </RouterLink>
-      <div
-        class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-        <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
-          <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-            Sign in to your account
-          </h1>
 
-          <form class="space-y-4 md:space-y-6">
-            <!-- <FormKit type="form" :value="formData" @submit="loginUser"> -->
+          <div class="container">
 
-            <div>
-              <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your
-                email</label>
-              <input v-model="username" type="email" name="username" id="username"
-                class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="name@company.com" required>
-              <!--                            <FormKit v-model="username" type="text" name="username" id="username" label="Email"-->
-              <!--                                validation="reqired|email" placeholder="name@company.com" />-->
+            <form @submit.prevent="loginUser" method="post">
+              <h1 class="h3 my-3 fw-light text-center">Login to Trello</h1>
 
-            </div>
-            <div>
-              <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-              <input v-model="password" type="password" name="password" id="password" placeholder="••••••••"
-                class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                required>
-              <!--                            <FormKit v-model="password" type="password" name="password" id="password" label="Password"-->
-              <!--                                validation="reqired" placeholder="••••••••" />-->
-            </div>
-            <!-- <div class="flex items-center justify-between">
-                <div class="flex items-start">
-                    <div class="flex items-center h-5">
-                        <input aria-describedby="remember" type="checkbox"
-                            class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-primary-600 dark:ring-offset-gray-800">
-                    </div>
-                    <div class="ml-3 text-sm">
-                        <label for="remember" class="text-gray-500 dark:text-gray-300">Remember me</label>
-                    </div>
-                </div>
-                <a href="#"
-                    class="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500">Forgot
-                    password?</a>
-            </div> -->
-            <button type="button" :disabled="loading" @click="loginUser"
-              class="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-              {{ loading ? "Please wait..." : "Sign in" }}
-            </button>
+              <div class="form-floating my-4">
+                <input type="email" v-model="username" name="username" id="username" class="form-control"  placeholder="name@example.com" required>
+                <label for="floatingInput">Email address</label>
+              </div>
+              <div class="form-floating my-4">
+                <input type="password" v-model="password" name="password" id="password" class="form-control" required placeholder="Password">
+                <label for="floatingPassword">Password</label>
+              </div>
 
-            <p class="text-sm font-light text-gray-500 dark:text-gray-400">
-              Don't have an account yet?
-              <RouterLink to="/signup" class="font-medium text-primary-600 hover:underline dark:text-primary-500">Sign up
-              </RouterLink>
-            </p>
-            <!-- </FormKit> -->
 
-          </form>
+              <button class="btn btn-primary w-100 py-2 my-4 mb-5 " :disabled="loading"
+              type="submit">{{ loading ? "Please wait..." : "Sign in" }}</button>
+
+              <div style="font-size: 14px;">
+                <RouterLink class="text-decoration-none me-2" to="/">Can't Login?</RouterLink> <RouterLink class="text-decoration-none"
+                  to="/signup">Create an account</RouterLink>
+
+              </div>
+            </form>
+          </div>
         </div>
+        <div class="col-auto col-lg-auto d-none d-lg-block"></div>
       </div>
+
+
+
     </div>
-  </section>
+    <Footer />
+  </div>
+
+    
+  </main>
 </template>
 
 <style scoped></style>

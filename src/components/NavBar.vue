@@ -100,12 +100,12 @@ const shouldRedirect = computed(() => {
                     <div class="d-lg-flex col-sm-12 col-lg-2 justify-content-lg-end my-3 my-lg-0">
                         <RouterLink to="/login" id="btnLogin"
                             class="btn btn-lg btn-outline-primary  rounded-0 my-0 py-3 w-100 d-block d-lg-none">Log in</RouterLink>
-                        <a href="/login.html" id="btnLogin"
+                        <RouterLink to="/login" id="btnLogin"
                             class="btn btn-lg rounded-0 my-0 py-3 w-100 d-none d-lg-block">Log
-                            in</a>
+                            in</RouterLink>
                     </div>
                     <div class="d-lg-flex col-sm-12 col-lg-auto justify-content-lg-end">
-                        <RouterLink href="signup" class="btn btn-primary btn-lg rounded-0 my-0 px-4 py-3 w-100 ">Get Trello
+                        <RouterLink to="/signup" class="btn btn-primary btn-lg rounded-0 my-0 px-4 py-3 w-100 ">Get Trello
                             for
                             free</RouterLink>
                     </div>

@@ -4,10 +4,6 @@
 </script>
 
 <template>
-  <!-- <header v-if="!$route.meta.hideNavbar">
-      <NavBar />
-  </header> -->
-
   <RouterView />
 </template>
 
