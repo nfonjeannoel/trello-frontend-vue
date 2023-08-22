@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { useBoardStore } from '@/stores/boards.store';
 import { useRouter } from 'vue-router'
 import { RouterLink } from "vue-router";
+import BoardNavbar from '@/components/BoardNavbar.vue'
+
+
 const boardStore = useBoardStore();
 const router = useRouter()
 
@@ -14,60 +17,90 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="md:mt-16 mt-0 ">
-        <div class="flex items-center justify-center">
-            <div class="container mx-auto">
-                <section class="max-w-md  p-4 bg-gradient-to-r from-gray-200 to-white-100 rounded-lg shadow-lg mx-auto">
-                    <!-- No Boards -->
-                    <div p-5 v-if="boardStore.myBoards.length == 0">
-                        <h2 class="text-2xl font-semibold mb-4 text-center">No Boards</h2>
-                    </div>
-                    <!-- Display boards -->
-                    <div v-else class="p-5 ">
-                        <h2 class="text-2xl font-semibold mb-4 text-center">My Boards</h2>
-                        <div class="grid gap-4">
-                            <!-- Board Card 1 -->
-                            <RouterLink :to="`/board/${board.id}`" v-for="board in boardStore.myBoards" :key="board.id"
-                                class="board-card bg-white rounded-lg overflow-hidden shadow p-4 transition-transform transform hover:scale-105">
-                                <div class="flex items-center">
-                                    <img src="https://picsum.photos/12/12" alt="Board Illustration"
-                                        class="w-12 h-12 rounded-full mr-4">
-                                    <h3 class="text-lg font-semibold">{{ board.name }}</h3>
-                                    <span class="ml-auto text-green-500">
-                                        <!-- Render a small icon for public boards -->
-                                        <!-- You can replace this icon with your preferred public icon or use an SVG -->
-                                        <svg v-if="board.is_public" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                            viewBox="0 0 20 20" fill="green">
-                                            <path
-                                                d="M9 3a1 1 0 012 0v3.586l3.707-3.707a1 1 0 111.414 1.414L10 9.414l-4.121-4.12a1 1 0 111.415-1.414L9 6.586V3zm9 6a9 9 0 11-18 0 9 9 0 0118 0zm-3.293 3.293a1 1 0 010 1.414L10 17.414l-4.293-4.293a1 1 0 011.414-1.414L10 14.586l2.293-2.293a1 1 0 011.414 0z" />
-                                        </svg>
-                                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
-                                            fill="red">
-                                            <path
-                                                d="M9 3a1 1 0 012 0v3.586l3.707-3.707a1 1 0 111.414 1.414L10 9.414l-4.121-4.12a1 1 0 111.415-1.414L9 6.586V3zm9 6a9 9 0 11-18 0 9 9 0 0118 0zm-3.293 3.293a1 1 0 010 1.414L10 17.414l-4.293-4.293a1 1 0 011.414-1.414L10 14.586l2.293-2.293a1 1 0 011.414 0z" />
-                                        </svg>
-                                    </span>
+    <div>
+        <BoardNavbar fixedTop=true />
+
+        <main class="container pt-5 mt-5">
+
+            <div class="row text-center ">
+                <div class="col-md-4 themed-grid-col d-none d-lg-block my-3">
+                    <!-- left -->
+
+                    <div class="d-flex flex-column pt-4 align-items-center justify-content-center">
+                        <div class="list-group w-100 px-0 px-lg-2 px-xl-5">
+                            <RouterLink to="/boards"
+                                class="active opacity-75 list-group-item list-group-item-action d-flex gap-3 py-2 ps-4"
+                                aria-current="true">
+                                <i class="bi bi-tags"></i>
+                                <div class="d-flex gap-2 w-100 justify-content-between">
+                                    <div>
+                                        <h6 class="mb-0">Boards</h6>
+                                    </div>
+                                </div>
+                            </RouterLink>
+                            <RouterLink to="/" class="list-group-item list-group-item-action d-flex gap-3 py-2 ps-4"
+                                aria-current="true">
+                                <i class="bi bi-house"></i>
+                                <div class="d-flex gap-2 w-100 justify-content-between">
+                                    <div>
+                                        <h6 class="mb-0">Home</h6>
+                                    </div>
                                 </div>
                             </RouterLink>
 
                         </div>
                     </div>
-                </section>
+
+
+                </div>
+
+
+                <div class="col-12 col-md-8 themed-grid-col pt-4 mx-auto px-5 my-3">
+                    <!-- right -->
+
+                    <div class="row g-0">
+                        <RouterLink :to="`/board/${board.id}`" v-for="board in boardStore.myBoards" :key="board.id"
+                            class="card  text-white col-12 col-lg-5 me-3 mx-auto mx-md-3 mb-5 mx-auto">
+                            <img src="https://mdbcdn.b-cdn.net/img/new/slides/017.webp" class="card-img img-fluid"
+                                alt="Stony Beach" />
+                            <div class="card-img-overlay d-flex flex-column justify-content-between pt-3 ps-3 ">
+                                <h5 class="card-title text-start"><strong>{{ board.name }}</strong></h5>
+                                <p v-if="board.is_public" class="card-footer pb-0 mb-0  text-end border-0"><i
+                                        class="bi bi-activity"></i></p>
+                                <p v-else class="card-footer pb-0 mb-0  text-end border-0"><i class="bi bi-circle-fill"></i>
+                                </p>
+                            </div>
+                        </RouterLink>
+
+
+                        <a href="#" class="card text-white col-12 bg-dark col-lg-5 me-3 mx-auto mx-md-3 mb-5 mx-auto">
+                            <img src="https://mdbcdn.b-cdn.net/img/new/slides/014.webp" class="card-img img-fluid"
+                                alt="Stony Beach" />
+                            <div class="card-img"></div>
+                            <div class="card-img-overlay d-flex align-items-center  justify-content-between pt-3 ps-3 ">
+                                <h5 class="card-body text-center"><strong>Create new board</strong></h5>
+                            </div>
+                        </a>
+
+
+
+
+                    </div>
+
+
+
+
+                </div>
             </div>
-        </div>
-    </main>
+        </main>
+
+    </div>
 </template>
   
 <style scoped>
 /* Add custom styles here */
-.board-card:hover {
-    /* Add styles for the hover effect */
-    /* For example, you can change the border color or background color */
-    border-color: #4fd1c5;
-    background-color: #f0f4f8;
-
-
-}
 </style>
+
+
   
 

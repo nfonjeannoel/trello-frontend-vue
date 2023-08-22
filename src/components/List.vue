@@ -67,16 +67,25 @@ const onDragOver = (e) => {
 </script>
 
 <template>
-  <div class="list-container">
-    <div class="list bg-white rounded-lg p-4 shadow h-fit">
-      <h2 class="text-xl font-semibold mb-2" contenteditable="true" @dragover="onDragOver" @blur="onChangeTitle"
-        @keypress="handleEnterButton">{{
-          list.name }}</h2>
-      <div class="cards-container" @drop="onDrop" @dragover="onDragOver">
-        <div v-if="list.cards.length > 0">
-          <Card v-for="card in list.cards" :key="card.id" :card="card" />
+  <div class="column list-container" @drop="onDrop" @dragover="onDragOver">
+    <div class="card">
+      <div class="card-header mb-2 px-3 py-0 text-center">
+        <h5 class="text-xl font-semibold my-1" contenteditable="true" @dragover="onDragOver" @blur="onChangeTitle"
+          @keypress="handleEnterButton">{{
+            list.name }}</h5>
+      </div>
+
+
+      <div class="cards-container" >
+        <div v-if="list.cards.length > 0"  > 
+          <Card v-for="card in list.cards" :key="card.id" :card="card" 
+            />
         </div>
-        <p v-else class="text-gray-500 mt-2">No cards in this list.</p>
+        <div v-else class="p-5"></div>
+      </div>
+
+      <div class="card-footer text-body-secondary m-0 p-0">
+        <button class="btn btn-sm w-100">+ Add Card</button>
       </div>
     </div>
   </div>

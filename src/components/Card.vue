@@ -1,39 +1,18 @@
 <!-- Card.vue -->
 
 <template>
-  <!-- <CardModal @emitClose="showMore = false" v-if="showMore" /> -->
-  <div class="card bg-white rounded-lg p-4 mt-2 shadow-md transition-shadow hover:shadow-xl"
-   draggable="true"
+  <div class="card mx-2 mb-2 "
+  draggable="true"
   :class="{ 'scaler': isDragging }"
     @dragstart="onDragCard($event, card)" @click="handleShowMore"
-    @dragend="onDragEnd">
-    
-    <h3 class="text-lg font-medium mb-2">{{ truncate(card.title, 50, '...') }}</h3>
-    <div class="text-gray-600 mb-2">
-      <!-- <p>{{ truncate(card.description, 50, '...') }}</p> -->
-      <p v-if="card.due_date" class="mt-2 flex items-center">
-        <i class="far fa-calendar-alt mr-1"></i> Due: {{ card.due_date }}
-      </p>
-    </div>
-    <div v-if="card.card_members?.length > 0">
-      <div class="flex items-center mt-2">
-        <i class="fas fa-user mr-1 text-gray-500"></i>
-        <div v-for="member in card.card_members" :key="member.id" class="flex items-center mr-2">
-          <img v-if="member.user.email"
-            :src="`https://www.gravatar.com/avatar/${hashCode(member.user.email)}?s=24&d=identicon`"
-            class="w-4 h-4 rounded-full mr-1" alt="Avatar" />
-          <span class="text-sm">{{ member.user.username.slice(0, 2) }}</span>
-        </div>
-      </div>
-    </div>
-    <div class="flex justify-between mt-4">
-      <div v-if="card.is_active" class="flex items-center">
-        <i class="fas fa-check text-green-500 mr-2"></i>
-        <span class="text-sm text-gray-500">Active</span>
-      </div>
-      <div v-else class="flex items-center">
-        <i class="fas fa-times text-red-500 mr-2"></i>
-        <span class="text-sm text-gray-500">Inactive</span>
+    @dragend="onDragEnd"
+  >
+    <div class="mb-2 card-body p-2">
+      <h6>{{ truncate(card.title, 50, '...') }}</h6>
+      <!-- <p class="mb-0 pb-1">{{ truncate(card.description, 50, '...') }}</p> -->
+
+      <div class="d-flex gap-1 justify-content-end" style="font-size: 12px;"  v-if="card.card_members?.length > 0">
+        <span v-for="member in card.card_members" class="rounded-5 border p-1">{{ member.user.username.slice(0, 2).toUpperCase() }}</span>
       </div>
     </div>
   </div>
@@ -83,9 +62,9 @@ const onDragCard = (e, card) => {
 };
 
 function onDragEnd() {
-      // Remove the class when dragging ends
-      isDragging.value = false;
-    }
+  // Remove the class when dragging ends
+  isDragging.value = false;
+}
 
 // Function to generate hash code for email
 const hashCode = (s) =>
@@ -115,9 +94,10 @@ i.fa-times {
   transform: scale(1.1) rotate(2deg);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   cursor: grabbing;
-  opacity: 0.8; /* Reduce opacity slightly on hover (you can adjust the value as needed) */
-  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; /* Add smooth transitions */
+  opacity: 0.8;
+  /* Reduce opacity slightly on hover (you can adjust the value as needed) */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+  /* Add smooth transitions */
 }
-
 </style>
   
