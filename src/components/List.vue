@@ -69,10 +69,9 @@ const onDragOver = (e) => {
 <template>
   <div class="column list-container" @drop="onDrop" @dragover="onDragOver">
     <div class="card">
-      <div class="card-header mb-2 px-3 py-0 text-center">
-        <h5 class="text-xl font-semibold my-1" contenteditable="true" @dragover="onDragOver" @blur="onChangeTitle"
+      <div class="card-header mb-2" contenteditable="true" @dragover="onDragOver" @blur="onChangeTitle"
           @keypress="handleEnterButton">{{
-            list.name }}</h5>
+            list.name }}
       </div>
 
 

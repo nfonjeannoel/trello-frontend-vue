@@ -75,10 +75,7 @@ const hashCode = (s) =>
 </script>
   
 <style>
-/* Card Styles */
-.card {
-  border: 2px solid #ccc;
-}
+
 
 /* Font Awesome Icons */
 i.fa-calendar-alt,
