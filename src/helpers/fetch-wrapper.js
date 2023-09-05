@@ -31,7 +31,7 @@ function authHeader(url) {
     // return auth header with jwt if user is logged in and request is to the api url
     const { user } = useAuthStore();
     const isLoggedIn = !!user?.access_token;
-    const isApiUrl = url.startsWith("http://127.0.0.1:8000/");
+    const isApiUrl = url.startsWith("https://trello-clone-fastapi.onrender.com/");
     if (url.includes("users/token")) {
         return {
             "Content-Type": "application/x-www-form-urlencoded",

@@ -4,7 +4,7 @@ import { fetchWrapper } from '@/helpers/fetch-wrapper';
 import router from "@/router";
 
 
-const baseUrl = `http://127.0.0.1:8000/users`;
+const baseUrl = `https://trello-clone-fastapi.onrender.com/users`;
 
 export const useAuthStore = defineStore({
     id: 'auth',

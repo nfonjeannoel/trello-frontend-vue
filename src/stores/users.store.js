@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 import { fetchWrapper } from '@/helpers/fetch-wrapper';
 
-const baseUrl = `http://127.0.0.1:8000/users`;
+const baseUrl = `https://trello-clone-fastapi.onrender.com/users`;
 export const useUsersStore = defineStore({
     id: 'users',
     state: () => ({

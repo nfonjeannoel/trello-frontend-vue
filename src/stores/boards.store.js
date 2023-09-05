@@ -3,14 +3,15 @@ import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers/fetch-wrapper';
 import router from "@/router";
 
+const base = `https://trello-clone-fastapi.onrender.com`
 
-const baseUrl = `http://127.0.0.1:8000/boards`;
-const listBaseUrl = `http://127.0.0.1:8000/lists`
-const cardBaseUrl = `http://127.0.0.1:8000/cards`
-const checkListBaseUrl = `http://127.0.0.1:8000/checklists`
-const commentBaseUrl = `http://127.0.0.1:8000/comments`
-const cardLabelBaseUrl = `http://127.0.0.1:8000/card_labels`
-const cardMemberBaseUrl = `http://127.0.0.1:8000/card_members`
+const baseUrl = `${base}/boards`;
+const listBaseUrl = `${base}/lists`
+const cardBaseUrl = `${base}/cards`
+const checkListBaseUrl = `${base}/checklists`
+const commentBaseUrl = `${base}/comments`
+const cardLabelBaseUrl = `${base}/card_labels`
+const cardMemberBaseUrl = `${base}/card_members`
 
 export const useBoardStore = defineStore({
     id: 'board',
