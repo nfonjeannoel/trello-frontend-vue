@@ -4,6 +4,10 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth.store';
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
+import { useBoardStore } from '@/stores/boards.store';
+import router from "@/router";
+
+const boardStore = useBoardStore();
 const route = useRoute();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore)
@@ -11,10 +15,73 @@ const { user } = storeToRefs(authStore)
 const props = defineProps(['fixedTop'])
 const fixedTop = computed(() => props.fixedTop ? 'fixed-top' : '')
 
+let isPrivate = ref(false)
+let boardName = ref('')
+
+function resetBoardData() {
+    boardName.value = ''
+    isPrivate.value = false
+}
+
+function createBoard() {
+    // validate board name
+    if (boardName.value.trim().length < 1) {
+        console.log('Board name must be at least 1 character.');
+        return;
+    }
+
+    boardStore.createBoard({
+        name: boardName.value.trim(),
+        is_public: !isPrivate.value
+    })
+
+    // reset board name
+    resetBoardData()
+    
+
+    
+    
+}
+
 </script>
 <template>
-    
-    <nav class="navbar navbar-expand-lg bg-light border-1 border-bottom px-3 py-lg-0" :class="fixedTop" >
+    <div class="modal fade" id="CreateBoardModalDefault" tabindex="-1" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Create a Board</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <div class="mb-3">
+                            <label for="exampleFormControlInput1" class="form-label">Board Name</label>
+                            <input type="email" v-model="boardName" class="form-control" id="exampleFormControlInput1" placeholder="Board Name">
+                        </div>
+                        <!-- <div class="mb-3">
+                            <label for="exampleFormControlTextarea1" class="form-label">Description</label>
+                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                        </div> -->
+                        <!-- Public or private. checkbox -->
+
+                        <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="privateCheckbox" v-model="isPrivate">
+                                <label class="form-check-label" for="privateCheckbox">Private</label>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="resetBoardData">Cancel</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-primary" @click="createBoard">Create Board</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <nav class="navbar navbar-expand-lg bg-light border-1 border-bottom px-3 py-lg-0" :class="fixedTop">
         <div class="container-fluid">
             <RouterLink class="navbar-brand" to="/">
                 <img style="width: 70px; height: 50px;" class="img-fluid "
@@ -71,7 +138,8 @@ const fixedTop = computed(() => props.fixedTop ? 'fixed-top' : '')
 
 
 
-                    <button type="button" class="btn btn-primary btn-sm mb-4 mb-lg-0 mx-0 mx-lg-3">
+                    <button data-bs-toggle="modal" data-bs-target="#CreateBoardModalDefault" type="button"
+                        class="btn btn-primary btn-sm mb-4 mb-lg-0 mx-0 mx-lg-3">
                         <i class="bi bi-plus"></i>
                         Create
                     </button>
@@ -102,7 +170,7 @@ const fixedTop = computed(() => props.fixedTop ? 'fixed-top' : '')
                 </form>
 
 
-                <div class="d-flex justify-content-between"> 
+                <div class="d-flex justify-content-between">
                     <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
                         class="bi bi-bell rounded-circle me-lg-3 mx-3" viewBox="0 0 16 16">
                         <path
@@ -121,9 +189,7 @@ const fixedTop = computed(() => props.fixedTop ? 'fixed-top' : '')
                             <li>
                                 <h6 class="dropdown-header">ACCOUNT</h6>
                             </li>
-                            <li><a class="dropdown-item" 
-                                @click="authStore.logout()"
-                                >Logout</a></li>
+                            <li><a class="dropdown-item" @click="authStore.logout()">Logout</a></li>
                             <li><a class="dropdown-item" href="#">Language</a></li>
                         </ul>
                     </div>
@@ -131,10 +197,6 @@ const fixedTop = computed(() => props.fixedTop ? 'fixed-top' : '')
             </div>
         </div>
     </nav>
-
-
-
-    
 </template>
 
 

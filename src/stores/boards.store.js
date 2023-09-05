@@ -80,6 +80,7 @@ export const useBoardStore = defineStore({
                     this.fullBoard.lists[index].cards.push(oldCard);
                 }
             });
+
         },
 
         async addCheckList(checkList) {
@@ -162,7 +163,7 @@ export const useBoardStore = defineStore({
             this.card.labels.push(newLabel);
             // console.log(newLabel);
         },
-        
+
 
         async addBoardLabel(label) {
             let newLabel = await fetchWrapper.post(`${baseUrl}/${this.fullBoard.id}/labels`, label);
@@ -202,8 +203,8 @@ export const useBoardStore = defineStore({
         //     });
         // },
 
-        async removeMemberFromCard(memberEmail){
-            await fetchWrapper.delete(`${cardMemberBaseUrl}/${this.fullBoard.id}/${this.card.id}/delete_card_member`,{
+        async removeMemberFromCard(memberEmail) {
+            await fetchWrapper.delete(`${cardMemberBaseUrl}/${this.fullBoard.id}/${this.card.id}/delete_card_member`, {
                 email: memberEmail
             });
             this.card.card_members.forEach((member, index) => {
@@ -241,7 +242,89 @@ export const useBoardStore = defineStore({
                     });
                 }
             });
+
+            
+        },
+
+        async updateTodoTitle(title, todo) {
+            let newTodo = await fetchWrapper.put(`${checkListBaseUrl}/${this.fullBoard.id}/${this.card.id}/${todo.id}/update_checklist`, {
+                    title: title,
+                    is_checked: todo.is_checked,
+                    position: todo.position
+            }
+
+            );
+
+            this.getFullCard(this.card.id, this.fullBoard.id);
+
+            // this.card.check_lists.forEach((checkList, index) => {
+            //     if (checkList.id === newTodo.id) {
+            //         this.card.check_lists[index] = newTodo;
+            //     }
+            // });
+
+
+            
+        },
+
+        async archiveCard(){
+            await fetchWrapper.delete(`${cardBaseUrl}/${this.fullBoard.id}/${this.card.list_id}/${this.card.id}/delete_card`);
+            this.fullBoard.lists.forEach((list, listIndex) => {
+                if (list.id === this.card.list_id) {
+                    this.fullBoard.lists[listIndex].cards.forEach((card, cardIndex) => {
+                        if (card.id === this.card.id) {
+                            this.fullBoard.lists[listIndex].cards.splice(cardIndex, 1);
+                        }
+                    });
+                }
+            });
+        },
+
+
+        async createCard(cardTitle, listId){
+            let newCard = await fetchWrapper.post(`${cardBaseUrl}/${this.fullBoard.id}/${listId}/create_card`, {
+                title: cardTitle,
+                description:  ""
+            });
+            // this.fullBoard.lists.forEach((list, listIndex) => {
+            //     if (list.id === listId) {
+            //         this.fullBoard.lists[listIndex].cards.push(newCard);
+            //     }
+            // });
+
+            this.getFullBoard(this.fullBoard.id);
+
+        },
+
+        async deleteList(listId){
+            await fetchWrapper.delete(`${listBaseUrl}/${listId}/${this.fullBoard.id}`);
+            this.fullBoard.lists.forEach((list, listIndex) => {
+                if (list.id === listId) {
+                    this.fullBoard.lists.splice(listIndex, 1);
+                }
+            });
+        },
+
+        async createList(listTitle){
+            let newList = await fetchWrapper.post(`${listBaseUrl}/${this.fullBoard.id}/create_list`, {
+                name: listTitle,
+                position: 0
+            });
+            this.fullBoard.lists.push(newList);
+        },
+
+        async createBoard(board){
+            let newBoard = await fetchWrapper.post(`${baseUrl}/create_board`, board);
+            router.push({ name: 'BoardDetails', params: { id: newBoard.id } })
+            
+            this.fullBoard = newBoard
+        },
+
+        async deleteBoard(){
+            await fetchWrapper.delete(`${baseUrl}/${this.fullBoard.id}`);
+            router.push({ name: 'boards' })
         }
+
 
 
     },

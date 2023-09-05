@@ -1,50 +1,98 @@
 
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBoardStore } from '@/stores/boards.store';
 import List from '@/components/List.vue';
 import { storeToRefs } from 'pinia'
 import BoardNavbar from '@/components/BoardNavbar.vue'
 import { RouterLink } from "vue-router";
+import { useUsersStore } from '@/stores/users.store';
+import { useAuthStore } from '@/stores/auth.store';
+
+const authStore = useAuthStore();
 
 const boardStore = useBoardStore();
 const route = useRoute();
+const userStore = useUsersStore();
 
 onMounted(async () => {
   const boardId = route.params.id;
   await boardStore.getFullBoard(boardId);
 });
 
+//watch fullBoard, if its id changes, get the new board
+watch(() => boardStore.fullBoard.id, async (newBoardId) => {
+  // console.log('watching board id', newBoardId);
+    await boardStore.getFullBoard(newBoardId);
+});
+
+
+let creatingList = ref(false);
+let newListTitle = ref('');
 // get a reference to the board
 // const board = computed(() => boardStore.fullBoard);
 const { fullBoard: board } = storeToRefs(boardStore);
 const MAX_DISPLAYED_MEMBERS = 5;
-let uniqueMembers = ref(new Set());
+// let uniqueMembers = ref(new Set());
 // Display the first letters of the board members' usernames
 const displayedMembers = computed(() => {
 
 
   // Loop through all the cards and collect unique members
-  boardStore.fullBoard.board_members?.forEach((member) => {
-    uniqueMembers.value.add(member.user.username);
-  });
+  // boardStore.fullBoard.board_members?.forEach((member) => {
+  //   uniqueMembers.value.add(member.user.username);
+  // });
 
   // Convert the unique members set to an array
-  const membersArray = Array.from(uniqueMembers.value);
+  // const membersArray = Array.from(uniqueMembers.value);
 
-  return membersArray.slice(0, MAX_DISPLAYED_MEMBERS);
+  // return membersArray.slice(0, MAX_DISPLAYED_MEMBERS);
+
+  return boardStore.fullBoard.board_members?.map((member) => member.user.username).slice(0, MAX_DISPLAYED_MEMBERS);
 });
 
 // Check if there are more members beyond the first 5 displayed members
 const hasMoreMembers = computed(() => {
+  return true
   // If the number of unique members is greater than the max displayed members
-  if (uniqueMembers.value.size > MAX_DISPLAYED_MEMBERS) {
-    return true;
-  }
-  return false
+  // if (uniqueMembers.value.size > MAX_DISPLAYED_MEMBERS) {
+  //   return true;
+  // }
+  // return false
 });
+
+
+
+function resetNewList() {
+  newListTitle.value = '';
+  creatingList.value = false;
+}
+
+function createList() {
+  if (newListTitle.value.length < 1) {
+    console.log('Title must be at least 1 character.');
+    return;
+  }
+
+  boardStore.createList(newListTitle.value);
+
+  resetNewList();
+
+
+}
+
+function discardList() {
+  resetNewList();
+}
+
+
+function deleteBoard() {
+  boardStore.deleteBoard();
+}
+
+
 </script>
 
 
@@ -107,7 +155,7 @@ const hasMoreMembers = computed(() => {
     </svg>
 
 
-    <main class="d-flex flex-nowrap " >
+    <main class="d-flex flex-nowrap ">
 
       <div class="d-none d-lg-flex flex-column flex-shrink-0 p-3 bg-body-tertiary" style="width: 280px; ">
         <!-- <a href="/"
@@ -152,11 +200,12 @@ const hasMoreMembers = computed(() => {
             </a>
           </li>
           <li>
-            <a href="#" class="nav-link link-body-emphasis">
-              <svg class="bi pe-none me-2" width="16" height="16">
+            <a  @click="deleteBoard"  class="nav-link link-body-emphasis" style="cursor: pointer;">
+              <!-- <svg class="bi pe-none me-2" width="16" height="16">
                 <use xlink:href="#people-circle" />
-              </svg>
-              Customers
+              </svg> -->
+              <i class="fas fa-trash me-2 "></i>
+              Delete Board
             </a>
           </li>
         </ul>
@@ -165,7 +214,7 @@ const hasMoreMembers = computed(() => {
           <a href="#" class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
             data-bs-toggle="dropdown" aria-expanded="false">
             <img src="https://github.com/mdo.png" alt="" width="32" height="32" class="rounded-circle me-2">
-            <strong>mdo</strong>
+            <strong>{{ userStore.user.email }}</strong>
           </a>
           <ul class="dropdown-menu text-small shadow">
             <li><a class="dropdown-item" href="#">New project...</a></li>
@@ -174,7 +223,7 @@ const hasMoreMembers = computed(() => {
             <li>
               <hr class="dropdown-divider">
             </li>
-            <li><a class="dropdown-item" href="#">Sign out</a></li>
+            <li><a class="dropdown-item" href="#" @click="authStore.logout()">Sign out</a></li>
           </ul>
         </div>
       </div>
@@ -195,13 +244,12 @@ const hasMoreMembers = computed(() => {
             <div class="d-flex gap-1">
               <button v-for="(member, index) in displayedMembers" :key="index" class="btn-sm">{{ member.slice(0,
                 2).toUpperCase() }}</button>
-                <div v-if="hasMoreMembers"
-              class="font-bold" style="font-size: larger;">
-              +
-            </div>
+              <div v-if="hasMoreMembers" class="font-bold" style="font-size: larger;">
+                +
+              </div>
 
             </div>
-            
+
 
 
           </div>
@@ -209,10 +257,30 @@ const hasMoreMembers = computed(() => {
 
 
 
-        <div class="scrollable-container flex-shrink-0 " >
+        <div class="scrollable-container flex-shrink-0 ">
 
           <List v-for="list in board.lists" :key="list.id" :list="list" class="flex-shrink-0" />
-          
+          <div class="column list-container">
+            <div class="bg-light">
+
+
+           
+              <div class="card-footer text-body-secondary m-0 p-0">
+
+                <div v-if="creatingList" class="py-3 px-2">
+                  <input type="text" class="input-group input-sm px-2" placeholder="Enter List title"
+                    v-model="newListTitle">
+                  <div class="d-flex gap-1 my-2">
+                    <button @click="createList" class="btn btn-primary btn-sm w-100">Create </button>
+                    <button @click="discardList" class="btn btn-danger btn-sm w-100">Discard</button>
+                  </div>
+                </div>
+
+                <button v-else @click="creatingList = true" class="btn btn-sm w-100">+ Create List</button>
+              </div>
+            </div>
+          </div>
+
 
         </div>
 

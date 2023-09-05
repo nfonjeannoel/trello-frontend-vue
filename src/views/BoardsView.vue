@@ -17,6 +17,7 @@ onMounted(() => {
 </script>
 
 <template>
+    
     <div>
         <BoardNavbar fixedTop=true />
 
@@ -73,7 +74,7 @@ onMounted(() => {
                         </RouterLink>
 
 
-                        <a href="#" class="card text-white col-12 bg-dark col-lg-5 me-3 mx-auto mx-md-3 mb-5 mx-auto">
+                        <a data-bs-toggle="modal" data-bs-target="#CreateBoardModalDefault" class="card text-white col-12 bg-dark col-lg-5 me-3 mx-auto mx-md-3 mb-5 mx-auto">
                             <img src="https://mdbcdn.b-cdn.net/img/new/slides/014.webp" class="card-img img-fluid"
                                 alt="Stony Beach" />
                             <div class="card-img"></div>

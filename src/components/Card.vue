@@ -1,7 +1,8 @@
 <!-- Card.vue -->
 
 <template>
-  <div class="card mx-2 mb-2 "
+  <div class="card mx-2 mb-2 " data-bs-toggle="modal"
+                                data-bs-target="#exampleModalCenteredScrollable"
   draggable="true"
   :class="{ 'scaler': isDragging }"
     @dragstart="onDragCard($event, card)" @click="handleShowMore"

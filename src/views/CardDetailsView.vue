@@ -3,9 +3,28 @@ import CardModal from '../components/CardModal.vue';
 import { useBoardStore } from '@/stores/boards.store';
 import { useUsersStore } from '@/stores/users.store';
 import { storeToRefs } from 'pinia'
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, computed, ref, onBeforeUnmount } from 'vue';
 import router from "@/router";
 import { useRoute } from 'vue-router';
+
+onMounted(() => {
+    document.body.classList.add('modal-open');
+
+    // Apply inline styles
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = '0px';
+
+
+});
+
+onBeforeUnmount(() => {
+    document.body.classList.remove('modal-open');
+
+    // Reset inline styles
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+
+});
 
 const boardStore = useBoardStore();
 const userStore = useUsersStore();
@@ -19,6 +38,7 @@ const list = computed(() => boardStore.fullBoard?.lists?.find(list => list.id ==
 const boardMembers = computed(() => boardStore.fullBoard?.board_members);
 const addingCheckList = ref(false);
 const newChecklist = ref('');
+const showActivity = ref(false);
 
 // create computed messages property. This property will hold card comments and card activities.
 // Parse the date created and sort them by date created. newest first
@@ -27,9 +47,15 @@ const messages = computed(() => {
     const comments = boardStore.card.comments;
     const activities = boardStore.card.card_activities;
     if (comments || activities) {
-        console.log('comments', comments);
-        console.log('activities', activities);
-        const combined_messages = [...(comments || []), ...(activities || [])];
+        // console.log('comments', comments);
+        // console.log('activities', activities);
+        let combined_messages;
+        if (showActivity.value) {
+            combined_messages = [...(comments || []), ...(activities || [])];
+        } else {
+            combined_messages = [...(comments || [])];
+        }
+
         combined_messages.sort((a, b) => new Date(b.created_datetime) - new Date(a.created_datetime));
         return combined_messages;
     }
@@ -90,17 +116,37 @@ const deleteMessage = async (messageId) => {
     await boardStore.deleteMessage(messageId);
 };
 
+const onChangeTodoTitle = (e, todo) => {
+    let newTitle = e.target.innerText.trim();
+    if (!validateText(e, newTitle)) return;
+
+    // console.log("new title", newTitle)
+    // console.log("todo", todo)
+
+    // if new title is the same as the old title, do nothing
+    if (newTitle === todo.title) {
+        console.log('Title is the same.');
+        // reset title
+        e.target.innerText = todo.title;
+        return
+    }
+
+    boardStore.updateTodoTitle(newTitle, todo);
+
+}
+
 const toggleEditComment = async (comment) => {
     comment.editingMessage = !comment.editingMessage;
 };
 
 const UpdateMessage = async (message) => {
-    let newMessage = document.getElementById(`message${message.id}`).innerHTML.trim();
+    let newMessage = document.getElementById(`message${message.id}`).value;
+    console.log("new message", newMessage)
     // if new title is the same as the old title, do nothing
     if (newMessage === message.comment) {
         console.log('Message is the same.');
         // reset title
-        document.getElementById(`message${message.id}`).innerText = message.comment;
+        document.getElementById(`message${message.id}`).innerHTML = message.comment;
     } else {
 
         await boardStore.updateMessage({
@@ -212,6 +258,9 @@ const onChangeTitle = (e) => {
 }
 
 
+
+
+
 const handleEnterButton = (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -256,211 +305,474 @@ const toggleMember = (member) => {
         boardStore.addMemberToCard(member.user.email);
     }
 };
+
+const minute = 60 * 1000;
+const hour = 60 * minute;
+const day = 24 * hour;
+const week = 7 * day;
+
+const formattedDate = (createdDatetime) => {
+    const apiDate = new Date(createdDatetime);
+    const currentDate = new Date();
+    const timeDifference = currentDate - apiDate;
+
+    if (timeDifference < minute) {
+        return "Just now";
+    } else if (timeDifference < hour) {
+        return `${Math.floor(timeDifference / minute)} minute${timeDifference < 2 * minute ? '' : 's'} ago`;
+    } else if (timeDifference < day) {
+        return `${Math.floor(timeDifference / hour)} hour${timeDifference < 2 * hour ? '' : 's'} ago`;
+    } else if (timeDifference < week) {
+        const daysAgo = Math.floor(timeDifference / day);
+        return daysAgo === 1 ? "Yesterday" : `${daysAgo} days ago`;
+    } else {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return apiDate.toLocaleDateString(undefined, options);
+    }
+};
+
+
+const formatDateTime = (dateTime) => {
+    const options = { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
+    const formattedDateTime = new Intl.DateTimeFormat('en-US', options).format(dateTime);
+    return formattedDateTime;
+};
+
+
+function truncate(text, length, suffix) {
+  if (text.length > length) {
+    return text.substring(0, length) + suffix;
+  } else {
+    return text;
+  }
+}
+
+
+function ArchiveCard() {
+    boardStore.archiveCard();
+    closeCard();
+}
+
+
+
+
+
 </script>
 
 <template>
-    <CardModal @close="closeCard">
-        <template v-slot:header>
-            <div class="w-full ">
-                <div class="flex items-center justify-between">
-                    <div></div>
-                    <button class="text-black" @click="closeCard">
-                        <i class="fas fa-close"></i>
-                    </button>
-                </div>
-                <div class="space-y-4">
-                    <div>
-                        <h1 class="text-2xl font-bold" @blur="onChangeTitle" contenteditable="true"
-                            @keypress="handleEnterButton">{{ card.title }}</h1>
-                        <p>in list - <b class="mr-2">{{ list?.name }}</b>
-                            <i v-if="card.is_active" class="fas fa-eye"></i>
-                            <i v-else class="fas fa-eye-slash"></i>
-                        </p>
+    <div class="modal fade show modal-fullscreen modal-lg d-block" aria-modal="true" role="dialog"
+        id="exampleModalCenteredScrollable" tabindex="100" aria-labelledby="exampleModalCenteredScrollableTitle"
+        style="backdrop-filter: blur(1px);">
+
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content ">
+                <!-- <div class="modal-header pb-2 px-3 px-lg-5">
+                                
+                            </div> -->
+
+
+                <div class="modal-body align-top ps-3 ps-lg-5" style="min-height: 50vh;">
+                    <div class="d-flex justify-content-between flex-grow-1">
+                        <div class="w-100">
+                            <h1 class=" fs-4 me-1 me-md-2 fw-bold w-100" @blur="onChangeTitle" contenteditable="true"
+                                @keypress="handleEnterButton" id="exampleModalCenteredScrollableTitle">{{ card.title }}</h1>
+                            <p>in list - <b class="me-3">{{ list?.name }}</b>
+                                <i v-if="card.is_active" class="fas fa-eye"></i>
+                                <i v-else class="fas fa-eye-slash"></i>
+                            </p>
+                        </div>
+
+                        <button type="button" class="btn-close" @click="closeCard" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
+                    <div class="row">
+                        <div class="col col-12 col-lg-9">
+                            <!-- top -->
+                            <div class="d-flex py-0 py-lg-3 flex-grow-0 flex-wrap gap-3 gap-lg-5">
+                                <!-- members -->
 
-                    <!-- members -->
+                                <div class="me-2">
+                                    <span class="fw-bold me-2">Members</span>
 
-                    <div class="flex justify-start items-center space-x-8">
-                        <div>
-                            <b>Members </b>
-                            <i v-if="showMembers" class="fa fa-close" style="color: green;" @click="toggleShowMembers"></i>
-                            <i v-else class="fa fa-add" style="color: green;" @click="toggleShowMembers"></i>
-                            <div v-show="showMembers" class="p-2">
-                                <!-- checkbox for each member of the board. If user is member of card, it shoul dbe checked -->
-                                <div v-for="member in boardMembers" :key="member.id" class="flex items-center">
-                                    <input type="checkbox" :checked="isMemberOfCard(member.user.id)"
-                                        @change="toggleMember(member)">
-                                    <p class="ml-2">{{ member.user.username }}</p>
+                                    <i v-if="showMembers" class="fa fa-close" style="color: green;"
+                                        @click="toggleShowMembers"></i>
+                                    <i v-else class="fa fa-add" style="color: green;" @click="toggleShowMembers"></i>
+                                    <div v-show="showMembers" class="p-2 mb-3" style="max-height: 150px; overflow-y: auto;">
+                                        <!-- checkbox for each member of the board. If user is member of card, it shoul dbe checked -->
+                                        <div v-for="member in boardMembers" :key="member.id"
+                                            class="d-flex gap-2 justify-content-start align-items-center">
+                                            <input type="checkbox" :checked="isMemberOfCard(member.user.id)"
+                                                @change="toggleMember(member)">
+                                            <span class="ml-2">{{ member.user.username }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-1 " style="font-size: 12px;">
+                                        <span v-for="member in card.card_members" :key="member.id"
+                                            v-if="card.card_members?.length > 0"
+                                            class="rounded-5 border p-1 bg-primary fw-bold">
+                                            {{ member.user.username.slice(0, 2).toUpperCase() }}
+                                        </span>
+                                        <!-- add new member -->
+                                        <span @click="toggleShowMembers" class="rounded-5 border p-1 bg-light fw-bold"><i
+                                                class="bi bi-plus-lg"></i></span>
+                                    </div>
+
+
+                                </div>
+                                <!-- labels -->
+                                <div class="me-2">
+                                    <span class="fw-bold me-2">Labels</span>
+
+                                    <i v-if="showInput" class="fa fa-close" style="color: green;"
+                                        @click="toggleShowInput"></i>
+                                    <i v-else class="fa fa-add" style="color: green;" @click="toggleShowInput"></i>
+                                    <div v-show="showInput" class="p-2 mb-2">
+                                        <div class="d-flex mb-2">
+                                            <input v-model="labelName" placeholder="Label Name"
+                                                class="form-control form-control-sm d-inline flex-2" />
+                                            <input type="color" v-model="labelColor"
+                                                class="me-2 form-control form-control-sm d-inline flex-1" />
+                                        </div>
+                                        <button @click="addOrUpdateLabel" class="fw-bold btn btn-sm btn-light me-2 ">{{
+                                            editingLabel ?
+                                            'UpdateLabel' : 'Add Label' }}</button>
+                                        <button v-if="editingLabel" @click="deleteCardLabel"
+                                            class="fw-bold btn btn-sm btn-light">Delete</button>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-1" style="font-size: 12px;">
+                                        <div v-for="label in card.labels" :key="label.id" v-if="card.labels?.length > 0"
+                                            :style="{ backgroundColor: label.board_label.color }" @click="editLabel(label)"
+                                            class="btn btn-primary btn-sm">
+                                            {{ label.board_label.name }}
+                                        </div>
+
+                                        <!-- add label -->
+                                        <div class="btn bg-light btn-sm" @click="toggleShowInput"><i
+                                                class="bi bi-plus-lg"></i></div>
+                                    </div>
+
+                                </div>
+                                <!-- due date -->
+                                <div class="me-2">
+                                    <span class="fw-bold">Due date</span>
+                                    <div>
+                                        <span>
+                                            <input type="checkbox" class="" name="" id="">
+                                        </span>
+                                        <button type="button"
+                                            class="btn btn-light btn-sm d-inline-flex align-items-center">Today at 5pm <span
+                                                class="ms-2 badge rounded bg-danger">overdue</span> <i
+                                                class="ms-2 bi bi-chevron-down"></i></button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex justify-between items-center mr-10 h-7">
 
-                                <div v-for="member in card.card_members" :key="member.id"
-                                    v-if="card.card_members?.length > 0"
-                                    class="w-7 h-7 rounded-full bg-blue-500 text-white mr-1 flex items-center justify-center font-semibold">
-                                    {{ member.user.username.slice(0, 2).toUpperCase() }}
-                                </div>
-
-                            </div>
-                        </div>
-                        <div>
-                            <b>Labels </b>
-                            <i v-if="showInput" class="fa fa-close" style="color: green;" @click="toggleShowInput"></i>
-                            <i v-else class="fa fa-add" style="color: green;" @click="toggleShowInput"></i>
-                            <div v-show="showInput" class="p-2">
-                                <input v-model="labelName" placeholder="Label Name" />
-                                <input type="color" v-model="labelColor" class="me-2" />
-                                <button @click="addOrUpdateLabel" class="font-bold mr-2">{{ editingLabel ? 'Update Label' :
-                                    'Add Label' }}</button>
-                                <button v-if="editingLabel" @click="deleteCardLabel" class="font-bold">Delete</button>
-                            </div>
-                            <div class="flex justify-between items-center mr-10 h-7">
-                                <div v-for="label in card.labels" :key="label.id" v-if="card.labels?.length > 0"
-                                    :style="{ backgroundColor: label.board_label.color }" @click="editLabel(label)"
-                                    class="h-7 text-white mr-1 flex items-center justify-center font-semibold mx-1 px-1">
-                                    {{ label.board_label.name }}
-                                </div>
-                            </div>
-
-
-                        </div>
-
-                    </div>
-                    <div class="flex items-center justify-start">
-                        <!-- Icons -->
-                        <div class="flex items-center space-x-4 mr-10" v-if="card.due_date">
-                            <div class="flex items-center">
-                                <!-- Due Date Icon -->
-                                <div class="text-gray-600 mr-3">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
-                                <p class="text-gray-600">{{ card.due_date }}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-4" v-if="card.reminder_datetime">
+                            <!-- checklist -->
                             <div>
-                                <!-- Reminder Icon -->
-                                <div class="text-gray-600 mr-3">
-                                    <i class="fas fa-bell"></i>
-                                </div>
-                                <p class="text-gray-600">{{ card.reminder_datetime }}</p>
-                            </div>
-                        </div>
-                    </div>
+                                <span class="text-lg fw-bold mb-2">Check lists <i v-if="addingCheckList"
+                                        @click="addingCheckList = false" class="fa fa-close hover:cursor-pointer"
+                                        style="color: green; "></i> <i v-else @click="addingCheckList = true"
+                                        class="fa fa-add hover:cursor-pointer" style="color: green; "></i>
+                                </span>
+                                <ul class="px-0">
+                                    <!-- Vue loop through checklists -->
 
-                    <div>
-                        <b>Description</b>
-                        <p class="text-gray-600 mb-4" @blur="onChangeDescription" contenteditable="true"
-                            v-html="card.description">
-                        </p>
-                    </div>
-
-
-                </div>
-            </div>
-        </template>
-        <template v-slot:body>
-            <div class="max-w-md w-full space-y-8">
-                <div>
-                    <h2 class="text-lg font-bold mb-2">Check lists <i v-if="addingCheckList"
-                            @click="addingCheckList = false" class="fa fa-close hover:cursor-pointer"
-                            style="color: green; "></i> <i v-else @click="addingCheckList = true"
-                            class="fa fa-add hover:cursor-pointer" style="color: green; "></i>
-                    </h2>
-                    <ul class="list-disc list-inside space-y-2">
-                        <!-- Vue loop through checklists -->
-
-                        <label v-show="addingCheckList" class="flex items-center space-x-2">
-                            <div class="flex items-center ">
-                                <input type="text" id="small-input" v-model="newChecklist"
-                                    class="block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500">
-                                <button @click="addCheckList"
-                                    class="block py-1 px-2 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
-                                    aria-current="page">Add</Button>
-                            </div>
-                        </label>
-                        <li v-for="checklist in card.check_lists" :key="checklist.id" class="list-none">
-                            <label class="flex items-center ">
-                                <input type="checkbox" @change="onCheckList(checklist)" :checked="checklist.is_checked"
-                                    class="form-checkbox">
-                                <div class="flex items-center justify-between space-x-4">
-                                    <span class="ml-3 ">{{ checklist.title }}</span>
-                                    <p><i @click="deleteChecklist($event, checklist.id)"
-                                            class="fa fa-trash hover:cursor-pointer"></i></p>
-                                </div>
-                            </label>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Comments -->
-                <div>
-                    <h2 class="text-lg font-bold mb-2">Comments</h2>
-                    <label class="flex items-center space-x-2">
-                        <div class="flex items-center ">
-                            <textarea type="text" id="small-input" v-model="comment"
-                                class="block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500"></textarea>
-                            <button @click="addComment"
-                                class="block py-1 px-2 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0"
-                                aria-current="page">Send</Button>
-                        </div>
-                    </label>
-                    <ul class="space-y-2 my-2">
-                        <!-- Vue loop through comments -->
-                        <div v-for="comment in messages" :key="comment.id"
-                            class="">
-                            <div v-if="comment.activity">
-                                <p>{{comment.activity}} -- {{comment.created_datetime}}</p>
-                            </div>
-                            <div v-else class="mb-3 border p-2 flex justify-between w-[600px]">
-
-                                <li>
-                                    <div class="flex space-x-2">
-                                        <div class="text-gray-600">
-                                            <i class="fas fa-comment"></i>
+                                    <label v-show="addingCheckList" class="flex items-center gap-2">
+                                        <div class="d-flex mb-2 ">
+                                            <input type="text" id="small-input" v-model="newChecklist"
+                                                class="form-control form-control-sm me-2">
+                                            <button @click="addCheckList" class="btn btn-sm btn-light px-2"
+                                                aria-current="page">Add</Button>
                                         </div>
-                                        <p class="text-gray-600">{{ comment.created_datetime }}</p>
+                                    </label>
+                                    <ul class="list-group py-0">
+
+                                        <li v-for="checklist in card.check_lists" :key="checklist.id"
+                                            class="list-group-item d-flex py-0 justify-content-between align-items-center py-1 text-wrap">
+                                            <div class="d-flex gap-2 flex-grow-1">
+                                                <input type="checkbox" @change="onCheckList(checklist)"
+                                                    :checked="checklist.is_checked" class="">
+                                                <div class="ml-3 flex-grow-1 w-100 px-2 text-wrap"  @blur="onChangeTodoTitle($event, checklist)" contenteditable="true"
+                                                    @keypress="handleEnterButton">{{ truncate(checklist.title, 50, '...') }}</div>
+                                            </div>
+
+
+                                            <p class="mb-0"><i @click="deleteChecklist($event, checklist.id)"
+                                                    class="fa fa-trash "></i></p>
+
+                                        </li>
+                                    </ul>
+
+                                </ul>
+                            </div>
+
+                            <!-- description -->
+                            <div>
+                                <div class=" py-2">
+                                    <div class="d-flex flex-grow-1 justify-content-between">
+                                        <span class="fw-bold">Description</span>
+                                        <button class="btn btn-sm btn-light">Edit</button>
                                     </div>
-                                    <div class="flex items-center mb-2">
+                                </div>
+                                <div>
+                                    <p @blur="onChangeDescription" contenteditable="true" v-html="card.description"></p>
+                                </div>
+                            </div>
+                            <!-- attachments -->
+                            <div>
+                                <div class=" py-3">
+                                    <div class="">
+                                        <span class="fw-bold">Attachments</span>
+                                    </div>
+                                </div>
+                                <div class="mb-2 mb-lg-3">
+                                    <div class="row mx-1 mx-lg-0">
                                         <div
-                                            class="w-7 h-7 rounded-full bg-blue-500 text-white mr-1 flex items-center justify-center font-semibold">
-                                            {{ comment.user.username.slice(0, 2).toUpperCase() }}
+                                            class="col-3 d-flex justify-content-center align-items-center bg-light px-3 py-2 px-lg-5 py-lg-4 ">
+                                            <span class="p-0 fw-bold fs-3">py</span>
                                         </div>
-                                        <p :id="`message${comment.id}`"
-                                            class="text-gray-600 ps-3 whitespace-wrap break-words max-w-[500px]"
-                                            :contenteditable="comment.editingMessage" v-html="comment.comment"></p>
+                                        <div class="col-9 px-3 py-2  bg-light-subtle">
+                                            <span class="fw-bold">new app json.py</span>
+                                            <p>uploaded 2 days ago</p>
+                                        </div>
                                     </div>
-                                    <button v-show="comment.editingMessage" @click="discardComment(comment)"
-                                        class="block py-1 px-2 text-white bg-blue-500 rounded hover:bg-blue-600 md:mx-2 md:my-0">Discard
-                                        changes</button>
 
-                                </li>
-                                <div v-if="userStore.user.id === comment.user_id" class="space-y-2">
-                                    <span @click="deleteMessage(comment.id)" class="hover:cursor-pointer"><i
-                                            class="fa fa-trash"></i></span>
-                                    <div v-if="comment.editingMessage">
-                                        <div @click="UpdateMessage(comment)" class="hover:cursor-pointer">
-                                            <i class="fa fa-paper-plane"></i>
-                                        </div>
-
-                                    </div>
-                                    <div v-else>
-                                        <div @click="toggleEditComment(comment)" class="hover:cursor-pointer">
-                                            <i class="fa fa-edit"></i>
-                                        </div>
-                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn btn-light btn-sm mx-1 mx-lg-0">Add
+                                        attachment</button>
                                 </div>
                             </div>
 
+
+
+                            <!-- activity -->
+                            <div>
+                                <div>
+                                    <div class=" py-3 pt-5">
+                                        <div class="d-flex flex-grow-1 justify-content-between">
+                                            <span class="fw-bold">Activity</span>
+                                            <button class="btn btn-sm btn-light" @click="showActivity = !showActivity">{{
+                                                showActivity ? 'Hide activity' : 'Show activity ' }}</button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <!-- Compose New message -->
+                                        <div class="mb-3 py-0 py-lg-1">
+                                            <!-- message sender image -->
+                                            <div class="d-flex">
+                                                <span class="rounded-5 border p-1 bg-primary flex-grow-0 flex fw-bold me-2"
+                                                    style="height: min-content;">{{ userStore.user.username.slice(0,
+                                                        2).toUpperCase() }} </span>
+                                                <!-- <input type="text " class="form-control " id="validationServer01"
+                                                    placeholder="Write a comment..." required> -->
+                                                <textarea class="form-control " type="text" aria-label="With textarea"
+                                                    v-model="comment" placeholder="Write a comment"></textarea>
+                                                <button class="btn btn-sm btn-primary ms-2 " @click="addComment"
+                                                    style="height: min-content;">send</button>
+                                            </div>
+
+                                        </div>
+
+                                        <!-- Old message -->
+                                        <div class="mb-3 py-0 py-lg-1" v-for="comment in messages"
+                                            :key="comment.activity ? `a${comment.id}` : comment.id">
+                                            <!-- message sender image -->
+
+
+                                            <!-- card activity -->
+                                            <div v-if="comment.activity">
+                                                <div class="d-flex">
+                                                    <div>
+                                                        <span
+                                                            class="rounded-5 border p-1 bg-info flex-grow-0 flex fw-bold me-2"
+                                                            style="height: min-content;">{{
+                                                                comment.user.username.slice(0, 2).toUpperCase() }}</span>
+                                                    </div>
+                                                    <div class="d-flex flex-grow-1">
+                                                        <div class="d-flex flex-grow-1 flex-column">
+                                                            <div class="">
+                                                                <!-- <span class="me-2 fw-bold">{{ comment.user.username }}</span> -->
+                                                                <span class="fw-bold" style="">{{ comment.activity }}</span>
+                                                            </div>
+                                                            <p class="mb-0" style="font-size: 12px;">
+                                                                {{ formatDateTime(new Date(comment.created_datetime)) }} </p>
+                                                        </div>
+                                                        <!-- <button class="btn btn-sm btn-primary ms-2"
+                                                                    style="height: min-content;">send</button> -->
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- card message -->
+                                            <div v-else>
+                                                <div class="d-flex">
+                                                    <div>
+                                                        <span
+                                                            class="rounded-5 border p-1 bg-primary flex-grow-0 flex fw-bold me-2"
+                                                            style="height: min-content;">{{ comment.user.username.slice(0,
+                                                                2).toUpperCase() }}</span>
+                                                    </div>
+                                                    <div class="d-flex flex-grow-1">
+                                                        <div class="d-flex flex-grow-1 flex-column">
+                                                            <div class="">
+                                                                <span class="me-2 fw-bold">{{ comment.user.username
+                                                                }}</span>
+                                                                <span style="font-size: 12px;">{{
+                                                                    formattedDate(comment.created_datetime) }}</span>
+                                                            </div>
+
+                                                            <div v-if="comment.editingMessage">
+                                                                <textarea :id="`message${comment.id}`"
+                                                                    v-html="comment.comment" class="form-control mb-2"
+                                                                    aria-label="With textarea"
+                                                                    placeholder="Write a comment"></textarea>
+                                                            </div>
+
+
+                                                            <p v-else :id="`message${comment.id}`"
+                                                                class="border p-2 bg-light-subtle rounded mb-0"
+                                                                v-html="comment.comment">
+                                                            </p>
+
+
+
+                                                            <div v-if="userStore.user.id === comment.user_id"
+                                                                class="d-flex gap-2" style="font-size: 12px;">
+                                                                <div v-if="comment.editingMessage" class="d-flex gap-2">
+                                                                    <button class="btn btn-sm btn-primary px-2"
+                                                                        @click="UpdateMessage(comment)">Save</button>
+                                                                    <button class="btn btn-sm btn-light px-2"
+                                                                        @click="discardComment(comment)">Discard
+                                                                        changes</button>
+                                                                </div>
+                                                                <div v-else class="d-flex gap-2">
+
+                                                                    <i class="bi bi-emoji-smile"></i>
+                                                                    <span class="fw-bold">.</span>
+                                                                    <a @click="toggleEditComment(comment)"
+                                                                        class="link-dark link-offset-2 link-underline-dark link-underline-opacity-25 link-underline-opacity-100-hover">Edit</a>
+                                                                    <span class="fw-bold">.</span>
+                                                                    <a @click="deleteMessage(comment.id)"
+                                                                        class="link-dark link-offset-2 link-underline-dark link-underline-opacity-25 link-underline-opacity-100-hover">Delete</a>
+
+                                                                </div>
+                                                            </div>
+                                                            <div v-else class="d-flex gap-2" style="font-size: 12px;">
+                                                                <i class="bi bi-emoji-smile"></i>
+                                                                <span class="fw-bold">.</span>
+                                                                <a a href="#"
+                                                                    class="link-dark link-offset-2 link-underline-dark link-underline-opacity-25 link-underline-opacity-100-hover">Reply</a>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+
+
+
+
+
+
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                        <div class="col col-3 d-none d-lg-block d-flex flex-column px-3 py-3">
+
+                            <p>Add to card</p>
+                            <!-- members -->
+                            <button @click="toggleShowMembers" class="btn btn-light w-100  text-start  btn-sm mb-2" type="button">
+                                <i class="bi bi-people ms-1 me-2"></i>
+                                Members
+                            </button>
+
+
+                            <!-- labels -->
+                            <button class="btn btn-light w-100 text-start btn-sm mb-2" @click="toggleShowInput" type="button">
+                                <i class="bi bi-key ms-1 me-2"></i>
+                                Labels
+                            </button>
+
+                            <!-- Checklist -->
+                            <button class="btn btn-light w-100 text-start btn-sm mb-2" @click="addingCheckList = true" type="button">
+                                <i class="bi bi-check ms-1 me-2"></i>
+                                Checklist
+                            </button>
+
+                            <!-- Dates -->
+                            <button class="btn btn-light w-100 text-start btn-sm mb-2 disabled" type="button">
+                                <i class="bi bi-calendar ms-1 me-2"></i>
+                                Dates
+                            </button>
+
+                            <!-- attachments -->
+                            <button class="btn btn-light w-100 text-start btn-sm mb-2 disabled" type="button">
+                                <i class="bi bi-file ms-1 me-2"></i>
+                                Attachments
+                            </button>
+
+                            <!-- cover -->
+                            <button class="btn btn-light w-100 text-start btn-sm mb-2 disabled" type="button">
+                                <i class="bi bi-image ms-1 me-2"></i>
+                                cover
+                            </button>
+
+                            <!-- custom fields -->
+                            <button class="btn btn-light w-100 text-start btn-sm mb-2 disabled" type="button">
+                                <i class="bi bi-hammer ms-1 me-2"></i>
+                                Custom fields
+                            </button>
+
+                            <!-- Power ups -->
+                            <p class="mt-4">Power ups</p>
+                            <!-- Add Power ups -->
+                            <button class="btn bg-light-subtle w-100 text-start btn-sm mb-2 disabled" type="button">
+                                <i class="bi bi-plus-lg ms-1 me-2"></i>
+                                Add Power ups
+                            </button>
+
+                            <!-- Automation -->
+                            <p class="mt-4">Automation</p>
+                            <!-- custom fields -->
+                            <button class="btn bg-light-subtle w-100 text-start btn-sm mb-2 disabled" type="button">
+                                <i class="bi bi-plus-lg ms-1 me-2"></i>
+                                Add button
+                            </button>
+
+                            <!-- actions -->
+                            <p class="mt-4">Actions</p>
+                            <!-- Move -->
+                            <button class="btn btn-light w-100 text-start btn-sm mb-2 disabled" type="button">
+                                <i class="bi bi-arrow-right ms-1 me-2"></i>
+                                Move
+                            </button>
+                            <!-- Copy -->
+                            <button class="btn btn-light w-100 text-start btn-sm mb-2 disabled" type="button">
+                                <i class="bi bi-clipboard ms-1 me-2"></i>
+                                Copy
+                            </button>
+                            <!-- Archive -->
+                            <button class="btn btn-light w-100 text-start btn-sm mb-2" type="button" @click="ArchiveCard">
+                                <i class="bi bi-archive ms-1 me-2"></i>
+                                Archive
+                            </button>
                         </div>
 
-                    </ul>
+                    </div>
                 </div>
             </div>
-        </template>
-        <!-- <template v-slot:footer>
-        footer
 
-        </template> -->
-    </CardModal>
+        </div>
+    </div>
 </template>
+
+<style scoped></style>
