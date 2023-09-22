@@ -127,7 +127,7 @@ function createBoard() {
                                 <h6 class="dropdown-header">Dropdown header</h6>
                             </li> -->
                             <li><RouterLink class="dropdown-item" to="/boards">My boards</RouterLink></li>
-                            <li><a class="dropdown-item" href="#">My boards</a></li>
+<!--                            <li><a class="dropdown-item" href="#">My boards</a></li>-->
                             <!-- <li><a class="dropdown-item" href="#">Another action</a></li> -->
                             <!-- <li><a class="dropdown-item" href="#">Something else here</a></li> -->
                             <!-- <li> -->
