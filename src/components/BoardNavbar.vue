@@ -123,16 +123,17 @@ function createBoard() {
                             workspaces
                         </button>
                         <ul class="dropdown-menu shadow">
-                            <li>
+                            <!-- <li>
                                 <h6 class="dropdown-header">Dropdown header</h6>
-                            </li>
-                            <li><a class="dropdown-item" href="#">Action</a></li>
-                            <li><a class="dropdown-item" href="#">Another action</a></li>
-                            <li><a class="dropdown-item" href="#">Something else here</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item" href="#">Separated link</a></li>
+                            </li> -->
+                            <li><RouterLink class="dropdown-item" to="/boards">My boards</RouterLink></li>
+                            <li><a class="dropdown-item" href="#">My boards</a></li>
+                            <!-- <li><a class="dropdown-item" href="#">Another action</a></li> -->
+                            <!-- <li><a class="dropdown-item" href="#">Something else here</a></li> -->
+                            <!-- <li> -->
+                                <!-- <hr class="dropdown-divider"> -->
+                            <!-- </li> -->
+                            <!-- <li><a class="dropdown-item" href="#">Separated link</a></li> -->
                         </ul>
                     </div>
 
