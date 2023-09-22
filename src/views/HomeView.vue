@@ -47,7 +47,7 @@ const { user } = storeToRefs(authStore)
 
           <div class="col-md-6 p-0 p-xl-5">
             <div class="h-100 py-5 px-3">
-              <img src="@/assets/img/home_showcase.png" class="d-block mx-lg-auto img-fluid" alt="Bootstrap Themes"
+              <img src="../assets/img/home_showcase.png" class="d-block mx-lg-auto img-fluid" alt="Bootstrap Themes"
                 width="700" height="500" loading="lazy">
             </div>
           </div>
